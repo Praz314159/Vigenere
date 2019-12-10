@@ -349,19 +349,21 @@ print(cipher_segments)
 #getting frequency count dictionary for plaintext
 plaintext_counts = frequency_analysis(plaintext) 
 plt.bar(plaintext_counts.keys(), plaintext_counts.values(), color ="g") 
-#plt.show() 
 
-
-plain_lists = sorted(plaintext_counts.items()) #sorted by key, return a list of tuples 
-plain_char, plain_count = zip(*plain_lists) #unpack list of pairs into two tuples and store in char and count 
+#plain_lists = sorted(plaintext_counts.items()) #sorted by key, return a list of tuples 
+#plain_char, plain_count = zip(*plain_lists) #unpack list of pairs into two tuples and store in char and count 
 
 ciphertext_counts = frequency_analysis(ciphertext) 
-cipher_lists = sorted(ciphertext_counts.items()) 
-cipher_char, cipher_count = zip(*cipher_lists) 
+plt.bar(ciphertext_counts.keys(), ciphertext_counts.values(), color ='r') 
+
+#cipher_lists = sorted(ciphertext_counts.items()) 
+#cipher_char, cipher_count = zip(*cipher_lists) 
 
 #plt.plot(plain_char, plain_count) 
 #plt.plot(cipher_char, cipher_count) 
 #plt.show() 
+
+plt.show()
 
 # Now we've done a basic frequency analysis! But, this won't really help us crack a Vigenere cipher until we are able to guess the correct length of the key. Now, we use Kasiski examination and the Friedman test in order to determine the key length of the Vigener cipher. This will, in fact, be quite interesting considering the classic Vigenere Cipher uses only a 26 letter alphabet. Here, sicne we are using ASCII, we have an alphabet that is roughly 10 times as large.
 
