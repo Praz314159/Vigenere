@@ -123,7 +123,7 @@ def find_disjoint_matches(ciphertext):
     #ciphertext in order to compare each character to every other letter, sequentially
     #searching for repeated character groups     
     match_start_indices = []
-    
+    matches = [] 
     i = 0
 
     while i < len(ciphertext):
@@ -166,7 +166,8 @@ def find_disjoint_matches(ciphertext):
                         #print("MATCH NOT DISJOINT, KEEP GOING!") 
                         j += 1 
                     else: 
-                        print("DISJOINT MATCH: ", match) 
+                        #print("DISJOINT MATCH: ", match)
+                        matches.append(match) 
                         match_1_end = match_1_start + match_counter #where sequence 1 ends 
                         match_2_end = match_2_start + match_counter #where sequence 2 ends
                     
@@ -191,8 +192,7 @@ def find_disjoint_matches(ciphertext):
         
     #END OF FINDING START INDICES OF DISJOINT REPEATED SEQUENCES 
 
-    return match_start_indices 
-
+    return match_start_indices, matches  
 
 def get_factors(n):
     #get all factors helper function
@@ -247,7 +247,7 @@ def guess_key_length(match_indices):
  
 
 def kasiski_exam(ciphertext): 
-    match_indices = find_disjoint_matches(ciphertext) 
+    match_indices, matches = find_disjoint_matches(ciphertext) 
     key_length = guess_key_length(match_indices) 
 
     #we group every n_th character of the ciphertext
@@ -330,9 +330,11 @@ else:
 print("CRYPTANALYSIS") 
 
 #guess key_length 
-match_indices = find_disjoint_matches(ciphertext) 
+match_indices, matches = find_disjoint_matches(ciphertext) 
 key_length = guess_key_length(match_indices) 
 
+print("MATCHES: ", matches)
+print("MATCH INDICES: ", match_indices)
 #generate cipher segments 
 cipher_segments = kasiski_exam(ciphertext) 
 
@@ -346,6 +348,9 @@ print(cipher_segments)
 
 #getting frequency count dictionary for plaintext
 plaintext_counts = frequency_analysis(plaintext) 
+plt.bar(plaintext_counts.keys(), plaintext_counts.values(), color ="g") 
+#plt.show() 
+
 
 plain_lists = sorted(plaintext_counts.items()) #sorted by key, return a list of tuples 
 plain_char, plain_count = zip(*plain_lists) #unpack list of pairs into two tuples and store in char and count 
@@ -354,9 +359,9 @@ ciphertext_counts = frequency_analysis(ciphertext)
 cipher_lists = sorted(ciphertext_counts.items()) 
 cipher_char, cipher_count = zip(*cipher_lists) 
 
-plt.plot(plain_char, plain_count) 
-plt.plot(cipher_char, cipher_count) 
-plt.show() 
+#plt.plot(plain_char, plain_count) 
+#plt.plot(cipher_char, cipher_count) 
+#plt.show() 
 
 # Now we've done a basic frequency analysis! But, this won't really help us crack a Vigenere cipher until we are able to guess the correct length of the key. Now, we use Kasiski examination and the Friedman test in order to determine the key length of the Vigener cipher. This will, in fact, be quite interesting considering the classic Vigenere Cipher uses only a 26 letter alphabet. Here, sicne we are using ASCII, we have an alphabet that is roughly 10 times as large.
 
