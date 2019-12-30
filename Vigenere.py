@@ -55,12 +55,13 @@ def create_key_stream(key):
 
 # encrypting file 
 def encrypt(keystream, plaintext): 
-    #note that 
-    #creates a file "ciphertext.txt" if the file doesn't already exist. If it does exist, 
+    #note that open creates a file "ciphertext.txt" if the file doesn't already exist. If it does exist, 
     #clears the file contents 
     with open("ciphertext.txt", "w+", encoding = "utf-8") as ciphertext: 
-        for i in range(plain_text_size): 
-            ciphertext.write( chr( (ord(plaintext[i]) + ord(keystream[i])) % 255) )
+        for i in range(plain_text_size):
+            plain_ord = ord(plaintext[i])
+            keystream_ord = ord(keystream[i])
+            ciphertext.write( chr( (plain_ord + keystream_ord) % 255))
             #ciphertext = ciphertext + (chr((ord(plaintext[i]) + ord(keystream[i])) % 255))
     
     #closing file     
@@ -75,7 +76,7 @@ def decrypt(keystream, cipherfile):
     cipher_f = open(cipherfile.name, "rt", encoding="utf8")
     ciphertext = cipher_f.read()
     #ciphertext = cipher_f.read() 
-    with open("recovered.txt", "w+", encoding = "utf-8") as recovered_text:
+    with open("recovered.txt", "w+", encoding = "utf8") as recovered_text:
         for i in range(plain_text_size): 
             recovered_text.write(chr((ord(ciphertext[i]) - ord(keystream[i])) % 255))
             #recovered_text = recovered_text + (chr((ord(ciphertext[i]) - ord(keystream[i])) % 255))
@@ -138,7 +139,6 @@ def find_disjoint_matches(ciphertext):
         while j < len(ciphertext):
             #begin by finding the next time in the ciphertext the same character repeats 
             traveler_2 = ciphertext[j] 
-            #print("j is: ", j)
             if traveler_1 == traveler_2: 
                 #the next appearance of the same character occurs at index j 
                 #Now we want to find out how long repeated characters continue 
@@ -214,14 +214,14 @@ def guess_key_length(match_indices):
             match_distance = match_indices[i+1] - match_indices[i]
             match_dists.append(match_distance) 
 
-    #print("Distances: ", match_dists) 
+    print("Distances: ", match_dists) 
     #we create a dictionary that stores factors and their counts
     factor_counts = {} 
     for i in range(len(match_dists)):
         #getting the factors for each distance 
         factors = get_factors(match_dists[i]) 
 
-        #print("Factors of ", match_dists[i], "are: ", factors)
+        print("Factors of ", match_dists[i], "are: ", factors)
         for j in range(len(factors)): 
             if factors[j] != 1: 
                 if factors[j] not in factor_counts.keys():
@@ -316,8 +316,11 @@ ciphertext = open(ciphertext_file.name, "rt", encoding = "utf8").read()
 recovered_plaintext = open(recovered_plaintext_file.name, "rt", encoding = "utf8").read() 
 
 print("Plaintext: ", plaintext)
-print("Encrypted File: ", ciphertext) 
+print("\n")
+print("Encrypted File: ", ciphertext)
+print("\n")
 print("Recovered Plaintext: ", recovered_plaintext)
+print("\n")
 
 if plaintext == recovered_plaintext: 
     print("Congratulations, decryption successful!")
@@ -330,19 +333,28 @@ else:
 print("CRYPTANALYSIS") 
 
 #guess key_length 
-match_indices, matches = find_disjoint_matches(ciphertext) 
-key_length = guess_key_length(match_indices) 
+cipher_match_indices, cipher_matches = find_disjoint_matches(ciphertext) 
+key_length = guess_key_length(cipher_match_indices) 
 
-print("MATCHES: ", matches)
-print("MATCH INDICES: ", match_indices)
+print("CIPHER MATCHES: ", cipher_matches)
+print("\n")
+print("CIPHER MATCH INDICES: ", cipher_match_indices)
+print("\n")
 #generate cipher segments 
 cipher_segments = kasiski_exam(ciphertext) 
 
-print("KEY LENGTH GUESS: ", key_length) 
+print("\n") 
+plaintext_match_indices, plain_matches = find_disjoint_matches(plaintext) 
+
+print("PLAIN MATCHES: ", plain_matches) 
+print("\nPLAIN MATCH INDICES: ", plaintext_match_indices) 
+
+print("\nKEY LENGTH GUESS: ", key_length) 
 if key_length == len(key):
     print("WE GUESSED CORRECT! KEY LENGTH IS: ", key_length)
+    print("\n") 
 else:
-    print("INCORRCT KEY LENGTH") 
+    print("INCORRCT KEY LENGTH\n") 
 
 print(cipher_segments) 
 
@@ -363,7 +375,7 @@ plt.bar(ciphertext_counts.keys(), ciphertext_counts.values(), color ='r')
 #plt.plot(cipher_char, cipher_count) 
 #plt.show() 
 
-plt.show()
+#plt.show()
 
 # Now we've done a basic frequency analysis! But, this won't really help us crack a Vigenere cipher until we are able to guess the correct length of the key. Now, we use Kasiski examination and the Friedman test in order to determine the key length of the Vigener cipher. This will, in fact, be quite interesting considering the classic Vigenere Cipher uses only a 26 letter alphabet. Here, sicne we are using ASCII, we have an alphabet that is roughly 10 times as large.
 
