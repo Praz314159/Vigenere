@@ -103,14 +103,14 @@ def find_matches(text):
         for j in range(i+1, len(text)):
             #print("j: ", text[j])
             if text[i] == text[j]:
-                print("Match at char: ", text[j]) 
+                #print("Match at char: ", text[j]) 
                 match_count = 0
                 match = ''
                 while i + match_count < len(text) and j + match_count < len(text):
                     if text[i + match_count] == text[j+match_count]: 
                         match += text[j+match_count] 
                         match_count += 1 
-                        print("Match: ", match) 
+                        #print("Match: ", match) 
                     else: 
                         break 
 
@@ -167,14 +167,23 @@ def guess_key_length(match_indices):
                     factor_counts[factors[j]] += 1
             else:
                 pass 
-
-    print("Sorted Factors: ", sorted(factor_counts))
-    print("Factor Frequencies: ", factor_counts)  
+    
+    #print("Sorted Factors: ", sorted(factor_counts))
+    print("Unsorted Factor Frequencies: ", factor_counts)
+    print("Factor Frequencies: ", sorted(factor_counts, key = factor_counts.get))  
     #we now have a dictionary that stores all the factors of all the distances between 
-    #repeated sequences and their frequencies. We want the factor with the max frequency. 
-    counts = list(factor_counts.values()) 
-    factors = list(factor_counts.keys()) 
-    key_length_guess = factors[counts.index(max(counts))] 
+    #repeated sequences and their frequencies. We want the factor with the max frequency.
+    
+    sorted_factor_counts = sorted(factor_counts, key = factor_counts.get) 
+    most_likely_lengths = sorted_factor_counts[-3:] 
+    key_length_guess = max(most_likely_lengths) 
+    #counts = list(factor_counts.values()) 
+    #factors = list(factor_counts.keys()) 
+    #key_length_guess = factors[counts.index(max(counts))] 
+    
+    # The kasisky analysis shouldn't necessarily return exactly the max frequency factor
+    # Rather, it should return the longest high frequency factor 
+    # How do we guess intelligently, given this? 
 
     return key_length_guess 
  
@@ -256,8 +265,8 @@ print("CRYPTANALYSIS")
 #guess key_length 
 cipher_match_indices, cipher_matches = find_matches(ciphertext) 
 
-print("CIPHER MATCHES: ", cipher_matches)
-print("CIPHER MATCH INDICES: ", cipher_match_indices)
+#print("CIPHER MATCHES: ", cipher_matches)
+#print("CIPHER MATCH INDICES: ", cipher_match_indices)
 
 key_length = guess_key_length(cipher_match_indices) 
 

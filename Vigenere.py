@@ -118,82 +118,38 @@ def disjoint(start_1, end_1, start_2, end_2):
 
     return disjoint 
 
-
-def find_disjoint_matches(ciphertext): 
-    #we'll start by including two traversers that simultaneously move through the 
-    #ciphertext in order to compare each character to every other letter, sequentially
-    #searching for repeated character groups     
-    match_start_indices = []
+def find_matches(text): 
+    index_matches = []
     matches = [] 
-    i = 0
-
-    while i < len(ciphertext):
-        traveler_1 = ciphertext[i]
-        j = i+1 #we only want to start searching from i+1
-        #print("i is: ", i) 
-        match_1_start = i
-        match_1_end = i
-        match_2_start = i
-        match_2_end = i
-        
-        while j < len(ciphertext):
-            #begin by finding the next time in the ciphertext the same character repeats 
-            traveler_2 = ciphertext[j] 
-            if traveler_1 == traveler_2: 
-                #the next appearance of the same character occurs at index j 
-                #Now we want to find out how long repeated characters continue 
-                match_2_start = j 
-                #print("CHAR MATCH AT IND: ", match_1_start, "and ", match_2_start) 
-
-                match_counter = 0 
-                match = "" 
-                while (j+match_counter) < len(ciphertext) and ciphertext[i + match_counter] == \
-                        ciphertext[j + match_counter]:
-                    #print("MATCH COUNTER: ", match_counter)
-                    #print("i = ", i) 
-                    #print("j = ", j) 
-                    match += ciphertext[i + match_counter] 
-                    match_counter += 1 
-                
-                #check if there is a repeated sequence 
-                if match_counter > 1:
-                    #print("MATCH SEQUENCE LEN: ", match_counter) 
-                    #print("MATCH: ", match) 
-                    #check if repeated sequences are disjoint 
-                    if not disjoint(match_1_start, match_1_start + match_counter, \
-                            match_2_start, match_2_start + match_counter):
-                        #we just increment j until we find a disjoint matched sequence 
-                        #print("MATCH NOT DISJOINT, KEEP GOING!") 
-                        j += 1 
+    text = list(text)
+    
+    for i in range(len(text)): 
+        #print("i: ", text[i])
+        for j in range(i+1, len(text)):
+            #print("j: ", text[j])
+            if text[i] == text[j]:
+                #print("Match at char: ", text[j]) 
+                match_count = 0
+                match = ''
+                while i + match_count < len(text) and j + match_count < len(text):
+                    if text[i + match_count] == text[j+match_count]: 
+                        match += text[j+match_count] 
+                        match_count += 1 
+                        #print("Match: ", match) 
                     else: 
-                        #print("DISJOINT MATCH: ", match)
-                        matches.append(match) 
-                        match_1_end = match_1_start + match_counter #where sequence 1 ends 
-                        match_2_end = match_2_start + match_counter #where sequence 2 ends
-                    
-                        #starts of both sequences are now consecutive items in the list 
-                        match_start_indices.append(match_1_start) 
-                        match_start_indices.append(match_2_start)
                         break 
-                        #now we have the end indices of two disjoint sequences
-                        #we want to break out of this while statement, then move 
-                        #the i counter to match_1_end then look for the next 
+
+                if match_count > 1: 
+                    matches.append(match) 
+                    index_matches.append(i) 
+                    index_matches.append(j) 
                 else: 
-                    j+=1 
+                    pass 
             else: 
-            #if we don't have a match, we simply increment j 
-                j += 1 
-        #now we reset i 
-        #print("MATCH 1 END: ", match_1_end)
-        if match_1_end == i:
-            i += 1
-        else: 
-            i = match_1_end 
-        
-    #END OF FINDING START INDICES OF DISJOINT REPEATED SEQUENCES 
+                pass 
 
-    return match_start_indices, matches  
-
+    return index_matches, matches
+       
 def get_factors(n):
     #get all factors helper function
     factors = [] 
@@ -236,12 +192,22 @@ def guess_key_length(match_indices):
             else:
                 pass 
 
-    #print("Factor Frequencies: ", factor_counts) 
+    #print("Sorted Factors: ", sorted(factor_counts))
+    print("Unsorted Factor Frequencies: ", factor_counts)
+    print("Factor Frequencies: ", sorted(factor_counts, key = factor_counts.get))  
     #we now have a dictionary that stores all the factors of all the distances between 
-    #repeated sequences and their frequencies. We want the factor with the max frequency. 
-    counts = list(factor_counts.values()) 
-    factors = list(factor_counts.keys()) 
-    key_length_guess = factors[counts.index(max(counts))] 
+    #repeated sequences and their frequencies. We want the factor with the max frequency.
+    
+    sorted_factor_counts = sorted(factor_counts, key = factor_counts.get) 
+    most_likely_lengths = sorted_factor_counts[-3:] 
+    key_length_guess = max(most_likely_lengths) 
+    #counts = list(factor_counts.values()) 
+    #factors = list(factor_counts.keys()) 
+    #key_length_guess = factors[counts.index(max(counts))] 
+    
+    # The kasisky analysis shouldn't necessarily return exactly the max frequency factor
+    # Rather, it should return the longest high frequency factor 
+    # How do we guess intelligently, given this? 
 
     return key_length_guess 
  
