@@ -213,7 +213,7 @@ def guess_key_length(match_indices):
  
 
 def kasiski_exam(ciphertext): 
-    match_indices, matches = find_disjoint_matches(ciphertext) 
+    match_indices, matches = find_matches(ciphertext) 
     key_length = guess_key_length(match_indices) 
 
     #we group every n_th character of the ciphertext
@@ -299,7 +299,7 @@ else:
 print("CRYPTANALYSIS") 
 
 #guess key_length 
-cipher_match_indices, cipher_matches = find_disjoint_matches(ciphertext) 
+cipher_match_indices, cipher_matches = find_matches(ciphertext) 
 key_length = guess_key_length(cipher_match_indices) 
 
 print("CIPHER MATCHES: ", cipher_matches)
@@ -310,7 +310,7 @@ print("\n")
 cipher_segments = kasiski_exam(ciphertext) 
 
 print("\n") 
-plaintext_match_indices, plain_matches = find_disjoint_matches(plaintext) 
+plaintext_match_indices, plain_matches = find_matches(plaintext) 
 
 print("PLAIN MATCHES: ", plain_matches) 
 print("\nPLAIN MATCH INDICES: ", plaintext_match_indices) 
@@ -341,7 +341,7 @@ plt.bar(ciphertext_counts.keys(), ciphertext_counts.values(), color ='r')
 #plt.plot(cipher_char, cipher_count) 
 #plt.show() 
 
-#plt.show()
+plt.show()
 
 # Now we've done a basic frequency analysis! But, this won't really help us crack a Vigenere cipher until we are able to guess the correct length of the key. Now, we use Kasiski examination and the Friedman test in order to determine the key length of the Vigener cipher. This will, in fact, be quite interesting considering the classic Vigenere Cipher uses only a 26 letter alphabet. Here, sicne we are using ASCII, we have an alphabet that is roughly 10 times as large.
 
