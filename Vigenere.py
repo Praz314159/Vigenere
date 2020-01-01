@@ -170,14 +170,14 @@ def guess_key_length(match_indices):
             match_distance = match_indices[i+1] - match_indices[i]
             match_dists.append(match_distance) 
 
-    print("Distances: ", match_dists) 
+    #print("Distances: ", match_dists) 
     #we create a dictionary that stores factors and their counts
     factor_counts = {} 
     for i in range(len(match_dists)):
         #getting the factors for each distance 
         factors = get_factors(match_dists[i]) 
 
-        print("Factors of ", match_dists[i], "are: ", factors)
+        #print("Factors of ", match_dists[i], "are: ", factors)
         for j in range(len(factors)): 
             if factors[j] != 1: 
                 if factors[j] not in factor_counts.keys():
@@ -193,8 +193,8 @@ def guess_key_length(match_indices):
                 pass 
 
     #print("Sorted Factors: ", sorted(factor_counts))
-    print("Unsorted Factor Frequencies: ", factor_counts)
-    print("Factor Frequencies: ", sorted(factor_counts, key = factor_counts.get))  
+    #print("Unsorted Factor Frequencies: ", factor_counts)
+    #print("Factor Frequencies: ", sorted(factor_counts, key = factor_counts.get))  
     #we now have a dictionary that stores all the factors of all the distances between 
     #repeated sequences and their frequencies. We want the factor with the max frequency.
     

@@ -168,18 +168,18 @@ def guess_key_length(match_indices):
             else:
                 pass 
     
-    #print("Sorted Factors: ", sorted(factor_counts))
+    print("Sorted Factors: ", sorted(factor_counts))
     print("Unsorted Factor Frequencies: ", factor_counts)
     print("Factor Frequencies: ", sorted(factor_counts, key = factor_counts.get))  
     #we now have a dictionary that stores all the factors of all the distances between 
     #repeated sequences and their frequencies. We want the factor with the max frequency.
     
-    sorted_factor_counts = sorted(factor_counts, key = factor_counts.get) 
-    most_likely_lengths = sorted_factor_counts[-3:] 
-    key_length_guess = max(most_likely_lengths) 
-    #counts = list(factor_counts.values()) 
-    #factors = list(factor_counts.keys()) 
-    #key_length_guess = factors[counts.index(max(counts))] 
+    #sorted_factor_counts = sorted(factor_counts, key = factor_counts.get) 
+    #most_likely_lengths = sorted_factor_counts[-3:] 
+    #key_length_guess = max(most_likely_lengths) 
+    counts = list(factor_counts.values()) 
+    factors = list(factor_counts.keys()) 
+    key_length_guess = factors[counts.index(max(counts))] 
     
     # The kasisky analysis shouldn't necessarily return exactly the max frequency factor
     # Rather, it should return the longest high frequency factor 
