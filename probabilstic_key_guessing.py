@@ -6,8 +6,8 @@
 # In the end, this script shoudl return the bucket in which the correct keylength is most likely 
 # to appear 
 
-import kasisky_debug as kd 
-import vigenere as vg 
+#import Kasisky_debug as kd 
+import Vigenere as vg 
 from nltk.book import * 
 from nltk import corpus
 import sys 
@@ -17,13 +17,10 @@ import sys
 # But, first I just want to check how often I'm guessing the correct key length with the 
 # current heuristic 
 
-#key = sys.argv[1]
-#key_len = len(key)
-
 keylens = {}  
-with open("key_bank.txt", "rt", encoding = "utf-8") as key_bank :
-    for count, line in enumerate(keybank):
-        keys.update(line: len(line)) 
+with open("key_bank.txt", "rt", encoding = "utf-8") as key_bank:
+    for count, line in enumerate(key_bank):
+        keylens.update({line: len(line)}) 
 
 keys = list(keylens.keys())
 
@@ -31,14 +28,25 @@ keys = list(keylens.keys())
 #for all keys 
 fileids = corpus.gutenberg.fileids() 
 for fileid in fileids:
-    #encrypting file 
+    #setting plaintext 
     plaintext = corpus.gutenberg.raw(fileid)
-    ciphertext = vg.encrypt(plaintext)
-    #guessing key length 
-    
-    #guess key_length for each of the 
-    cipher_match_indices, cipher_matches = vg.find_matches(ciphertext) 
-    key_length = vg.guess_key_length(cipher_match_indices) 
+    #encrypting for each key 
+    for key in keys:
+        correct = False 
+        keystream = vg.create_key_stream(key) 
+        ciphertext = vg.encrypt(keystream, plaintext)
+        
+        #guessing key length 
+        cipher_match_indices, cipher_matches = vg.find_matches(ciphertext) 
+        key_length_guess = vg.guess_key_length(cipher_match_indices)
+
+        if key_length_guess == keylens.get(key):
+            correct = True
+            print(correct) 
+
+
+#ideally, we are able to create a plot that has key length on the x axis and percent correct guesses
+#on the y axis 
 
 
 

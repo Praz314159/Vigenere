@@ -11,30 +11,31 @@ import matplotlib.pylab as plt
 #               3) We then proceed character by character encrypting with e_i = (p_i + k_i) mod (26)
 
 ################### INPUT #########################################
-
+'''
 # prompt user for file path
-plaintext_file_name = sys.argv[1]  
+plaintext_file_name = "plaintext.txt"#sys.argv[1]  
 
 #prompt user for file action mode 
-mode = input("In what mode would you like to open the file r, w, a or rt?")
+#mode = input("In what mode would you like to open the file r, w, a or rt?")
 
 #opening and storing file 
-f = open(plaintext_file_name, mode)
+f = open(plaintext_file_name, "rt")
 plaintext = f.read() 
 # prompt user for key 
-key = sys.argv[2]  
+#key = sys.argv[2]  
 
 #store sizes of key and plaintext 
-key_size = len(key)
-plain_text_size = len(plaintext) 
-
+#key_size = len(key)
+#plain_text_size = len(plaintext) 
+'''
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
 # creating keystream from key 
-def create_key_stream(key):
+def create_key_stream(key, plaintext):
 
     keystream = ""
-
+    key_size = len(key)
+    plain_text_size = len(plaintext) 
     # if the keysize is greater than plaintext size, then truncate key to size of plaintext. 
     if key_size > plain_text_size:
         print("You're using a One-Time Pad!") 
@@ -65,7 +66,7 @@ def encrypt(keystream, plaintext):
             #ciphertext = ciphertext + (chr((ord(plaintext[i]) + ord(keystream[i])) % 255))
     
     #closing file     
-    ciphertext.close()
+    #ciphertext.close()
     return ciphertext 
 
 #decrypting file 
@@ -268,12 +269,15 @@ def frequency_analysis(text):
 
 def normalize_frequency(count_dict):
     # TO DO: normalize -- we just want count/len(count_dict) for each character. This may or may not be useful, who knows ... 
-    pass 
+    pass
 
+
+
+'''
 ##################################################### TESTING ###############################################
 
 ############ ENCRYPTION PLAINTEXT, DECRYPTING CIPHERTEXT ################
-
+key = "key"
 keystream = create_key_stream(key) #creating keystream 
 ciphertext_file = encrypt(keystream, plaintext) #encrypt createst ciphertext file obj
 recovered_plaintext_file = decrypt(keystream, ciphertext_file) #decrypte creates recovered plaintext file obj
@@ -344,7 +348,7 @@ plt.bar(ciphertext_counts.keys(), ciphertext_counts.values(), color ='r')
 plt.show()
 
 # Now we've done a basic frequency analysis! But, this won't really help us crack a Vigenere cipher until we are able to guess the correct length of the key. Now, we use Kasiski examination and the Friedman test in order to determine the key length of the Vigener cipher. This will, in fact, be quite interesting considering the classic Vigenere Cipher uses only a 26 letter alphabet. Here, sicne we are using ASCII, we have an alphabet that is roughly 10 times as large.
-
+'''
 
 
 
