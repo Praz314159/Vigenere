@@ -1,14 +1,14 @@
-import numpy as np
-import nltk as nlp 
-import sys
-import os.path 
-import matplotlib.pylab as plt
-
 # This is a vigenere encryption tool. The purpose of this code is to take as input some text, encrypt it, then return the ecrypted message. 
 # Recall how the vigenere cipher works. It is a polyalphabetic cipher that does the following: 
 #               1) We choose a key
 #               2) We repeat the key until it is the same length as the plaintext (this is known as the keystream  
 #               3) We then proceed character by character encrypting with e_i = (p_i + k_i) mod (26)
+
+import numpy as np
+import nltk as nlp 
+import sys
+import os.path 
+import matplotlib.pylab as plt
 
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
@@ -51,7 +51,7 @@ def encrypt(keystream, plaintext):
             #ciphertext = ciphertext + (chr((ord(plaintext[i]) + ord(keystream[i])) % 255))
     
     #closing file     
-    #ciphertext.close()
+    ciphertext.close()
     return ciphertext 
 
 #decrypting file 
@@ -66,10 +66,9 @@ def decrypt(keystream, cipherfile):
     with open("recovered.txt", "w+", encoding = "utf8") as recovered_text:
         for i in range(cipher_text_size): 
             recovered_text.write(chr((ord(ciphertext[i]) - ord(keystream[i])) % 255))
-            #recovered_text = recovered_text + (chr((ord(ciphertext[i]) - ord(keystream[i])) % 255))
-    
-    #cipher_f.close()
-    #recovered_text.close() 
+   
+    cipher_f.close()
+    recovered_text.close() 
     return recovered_text 
 
 ######################### ANALYSIS ###########################################
@@ -120,7 +119,6 @@ def plot_frequencies(text, c):
     text_counts = frequency_analysis(text)
     plt.bar(text_counts.keys(), text_counts.values(), color = c)
     plt.show() 
-
 
 ######################### KASISKI EXAMINATION ################################
 
@@ -251,56 +249,6 @@ def kasiski_exam(ciphertext):
     
     return list(cipher_segments.values()) 
 
-
-######################################## FREQUENCY ANALYSIS ##################################
-
-def frequency_analysis(text): 
-    ASCII_char_array = []
-    for i in range(255):
-        ASCII_char_array.append(chr(i))
-
-    characters = ASCII_char_array
-    
-    #building empty list that will store the frequency counts for each character
-    count_list = []
-    i = 0
-    while i < 255: 
-        count_list.append(0)
-        i += 1 
-
-    #builds character array from the text 
-    text_array = [] 
-    for char in text:
-        text_array.append(char)
-
-    #create dictionary associating characters with their counts and initializing 
-    #all counts to 0  
-    char_count_dict = {} 
-    for i in range(len(characters)):
-            char_count_dict.update({characters[i]: 0}) 
-   
-    #counting characters and addding their counts to char_count_dict 
-    for char in text_array:
-        i = 0
-        while i < 255: 
-            if char == characters[i]:
-                count_list[i] += 1
-                char_count_dict.update({char: count_list[i]}) 
-            i += 1
-
-    #create a dictionary associating characters with their 
-    return char_count_dict 
-
-def normalize_frequency(count_dict):
-    # TO DO: normalize -- we just want count/len(count_dict) for each character. This may or 
-    # may not be useful, who knows ... 
-    pass
-
-def plot_frequencies(text, c):
-    text_counts = frequency_analysis(text)
-    plt.bar(text_counts.keys(), text_counts.values(), color = c)
-    plt.show() 
-
 def main(): 
     # prompt user for file path
     plaintext_file_name = sys.argv[1]  
@@ -326,12 +274,50 @@ def main():
     #once we have the cipher segments, we have to run the frequency analysis on each 
     #individual segment. Then we find what the highest frequency 
 
-    print("\nKEY LENGTH GUESS: ", key_length) 
+    print("KEY LENGTH GUESS: ", key_length) 
     if key_length == len(key):
         print("WE GUESSED CORRECT! KEY LENGTH IS: ", key_length)
     else:
-        print("INCORRCT KEY LENGTH\n")
+        print("INCORRCT KEY LENGTH")
         print(sorted_factor_counts)
     
 if __name__ == "__main__":
     main() 
+
+########################################################################################
+'''
+Let's do a review of what we have at the moment First, we have a bunch of methods: 
+    1. create_key_stream() 
+    2. encrypt()
+    3. decrypt()
+    4. frequency_analysis()
+    5. normalize_frequencies() 
+    6. plot_frequencies() 
+    7. disjoint()
+    8. find_matches()
+    9. get_factors()
+    10. guess_key_length() 
+    11. kasiski_exam() 
+    12. main() 
+
+Currently, our main challenge is that it's difficult to guess the correct key_length.
+This isn't so bad, though. We can check what percentage of the time the correct key is within
+the five most common factors and so on. This will determine how we decide to choose likely 
+key lengths. Once we know how many candidate key lengths to return, we turn our attention
+to the problem of selecting the correct key length from amongst the candidates. This can be
+done by running attempted decryptions and checking which key length makes the most sense. 
+However, running decryptions using various key length candidates will defacto return the key. 
+That is, both the correct keylength and key will be discovered simultaneously. The next question
+is what the decryption process looks like using candidate keylengths. Clearly, the first step
+is to split the ciphertext into text segments that represent "residue classes" mod candidate 
+key length. Then we decreypt each ciphersegment with each of the 255 possible ASCII characters.
+The one that produces, for each cipher segment, a character frequency profile that most closely 
+resembles the character frequency profile of the English language will be the ASCII char
+most likely to occupy the place in the key representing the "residue class" that is that
+cipher segment. Once we have the most likely characters for each position in the key, 
+we brute force decrypt until we find a non-gibberish recovered text. 
+
+
+
+
+
