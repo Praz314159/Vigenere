@@ -73,6 +73,55 @@ def decrypt(keystream, cipherfile):
     return recovered_text 
 
 ######################### ANALYSIS ###########################################
+######################### FREQUENCY ANALYSIS #################################
+
+def frequency_analysis(text): 
+    ASCII_char_array = []
+    for i in range(255):
+        ASCII_char_array.append(chr(i))
+
+    characters = ASCII_char_array
+    
+    #building empty list that will store the frequency counts for each character
+    count_list = []
+    i = 0
+    while i < 255: 
+        count_list.append(0)
+        i += 1 
+
+    #builds character array from the text 
+    text_array = [] 
+    for char in text:
+        text_array.append(char)
+
+    #create dictionary associating characters with their counts and initializing 
+    #all counts to 0  
+    char_count_dict = {} 
+    for i in range(len(characters)):
+            char_count_dict.update({characters[i]: 0}) 
+   
+    #counting characters and addding their counts to char_count_dict 
+    for char in text_array:
+        i = 0
+        while i < 255: 
+            if char == characters[i]:
+                count_list[i] += 1
+                char_count_dict.update({char: count_list[i]}) 
+            i += 1
+
+    #create a dictionary associating characters with their 
+    return char_count_dict 
+
+def normalize_frequency(count_dict):
+    # TO DO: normalize -- we just want count/len(count_dict) for each character. This may or may not be useful, who knows ... 
+    pass
+
+def plot_frequencies(text, c):
+    text_counts = frequency_analysis(text)
+    plt.bar(text_counts.keys(), text_counts.values(), color = c)
+    plt.show() 
+
+
 ######################### KASISKI EXAMINATION ################################
 
 #Some helper functions for the kasiski exam 
@@ -159,25 +208,28 @@ def guess_key_length(match_indices):
                     factor_counts[factors[j]] += 1
             else:
                 pass 
-
-    #print("Sorted Factors: ", sorted(factor_counts))
-    #print("Unsorted Factor Frequencies: ", factor_counts)
-    #print("Factor Frequencies: ", sorted(factor_counts, key = factor_counts.get))  
+    
     #we now have a dictionary that stores all the factors of all the distances between 
     #repeated sequences and their frequencies. We want the factor with the max frequency.
     
-    sorted_factor_counts = sorted(factor_counts, key = factor_counts.get) 
-    most_likely_lengths = sorted_factor_counts[-3:] 
-    key_length_guess = max(most_likely_lengths) 
-    #counts = list(factor_counts.values()) 
-    #factors = list(factor_counts.keys()) 
-    #key_length_guess = factors[counts.index(max(counts))] 
+    if not factor_counts: 
+        key_length_guess = -1
+        most_likely_lengths = -1
+        sorted_factor_counts = -1
+        factor_counts = -1
+    else:      
+        sorted_factor_counts = sorted(factor_counts, key = factor_counts.get) 
+        most_likely_lengths = sorted_factor_counts[-3:] 
+        key_length_guess = max(most_likely_lengths) 
+        #counts = list(factor_counts.values()) 
+        #factors = list(factor_counts.keys()) 
+        #key_length_guess = factors[counts.index(max(counts))] 
     
     # The kasisky analysis shouldn't necessarily return exactly the max frequency factor
     # Rather, it should return the longest high frequency factor 
     # How do we guess intelligently, given this? 
 
-    return key_length_guess 
+    return key_length_guess, most_likely_lengths, sorted_factor_counts, factor_counts  
  
 
 def kasiski_exam(ciphertext): 
@@ -240,7 +292,8 @@ def frequency_analysis(text):
     return char_count_dict 
 
 def normalize_frequency(count_dict):
-    # TO DO: normalize -- we just want count/len(count_dict) for each character. This may or may not be useful, who knows ... 
+    # TO DO: normalize -- we just want count/len(count_dict) for each character. This may or 
+    # may not be useful, who knows ... 
     pass
 
 def plot_frequencies(text, c):
@@ -256,7 +309,7 @@ def main():
     # prompt user for key 
     key = sys.argv[2]  
 
-    keystream = create_key_stream(key) #creating keystream 
+    keystream = create_key_stream(key, plaintext) #creating keystream 
     ciphertext_file = encrypt(keystream, plaintext) #creating ciphertext file obj
     recovered_plaintext_file = decrypt(keystream, ciphertext_file) #creating plaintext file obj
     ciphertext = open(ciphertext_file.name, "rt", encoding = "utf8").read() 
@@ -266,8 +319,8 @@ def main():
 
     #guess key_length 
     cipher_match_indices, cipher_matches = find_matches(ciphertext) 
-    key_length = guess_key_length(cipher_match_indices) 
-
+    key_length, most_likely_lengths, sorted_factor_counts, factor_counts = guess_key_length(cipher_match_indices) 
+    
     #generate cipher segments 
     cipher_segments = kasiski_exam(ciphertext) 
     #once we have the cipher segments, we have to run the frequency analysis on each 
@@ -277,7 +330,8 @@ def main():
     if key_length == len(key):
         print("WE GUESSED CORRECT! KEY LENGTH IS: ", key_length)
     else:
-        print("INCORRCT KEY LENGTH\n") 
+        print("INCORRCT KEY LENGTH\n")
+        print(sorted_factor_counts)
     
 if __name__ == "__main__":
     main() 

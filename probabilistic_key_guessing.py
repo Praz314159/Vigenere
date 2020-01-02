@@ -18,13 +18,13 @@ def gen_keys():
     start = 0 
     stop = 255
     with open("key_bank.txt", "w+", encoding = "utf-8") as key_bank: 
-        for keylen in range(2,35): 
+        for keylen in range(2,25): 
             #generate random key from ASCII characters --> range 0-255 
             #generate 5 keys 
             for keynum in range(5):
                 key = "" 
                 ASCII_ords = [random.randint(start, stop) for ch_ord in range(keylen)]
-                print(ASCII_ords) 
+                #print(ASCII_ords) 
 
                 #convert list of ASCII orders into chars and write to key bank 
                 for ASCII in ASCII_ords: 
@@ -58,7 +58,7 @@ def validate_guess(keys, fileids):
             ciphertext = open(ciphertext_file.name, "rt", encoding = "utf-8").read() 
             #guessing key length 
             cipher_match_indices, cipher_matches = vg.find_matches(ciphertext) 
-            key_length_guess = vg.guess_key_length(cipher_match_indices)
+            key_length_guess, most_likely_lengths, sorted_factor_counts, factor_counts = vg.guess_key_length(cipher_match_indices)
             
             if key_length_guess != keylens.get(key):
                 incorrect_count += 1 
@@ -70,29 +70,27 @@ def validate_guess(keys, fileids):
     percent_correct = (correct_count)/(correct_count + incorrect_count)
     return percent_correct 
 
-#generating random key bank 
-key_bank = gen_keys() 
+def main(): 
+    #generating random key bank 
+    key_bank = gen_keys() 
 
-#creating string literal dictionary of keys in keybank                 
-keylens = {}  
-with open("key_bank.txt", "rt", encoding = "utf-8") as key_bank:
-    for count, line in enumerate(key_bank):
-        keylens.update({line: len(line)}) 
+    #creating string literal dictionary of keys in keybank                 
+    keylens = {}  
+    with open("key_bank.txt", "rt", encoding = "utf-8") as key_bank:
+        for count, line in enumerate(key_bank):
+            keylens.update({line: len(line)}) 
 
-#listifying keys 
-keys = list(keylens.keys())
-#for key in keys:
-#    print(len(key))
-#getting list of fileids 
-fileids = corpus.gutenberg.fileids() 
+    #listifying keys 
+    keys = list(keylens.keys())
 
-percent_correct = validate_guess(keys, fileids) 
-print(percent_correct) 
+    #getting list of fileids 
+    fileids = corpus.gutenberg.fileids() 
 
-#ideally, we are able to create a plot that has key length on the x axis and percent correct guesses
-#on the y axis 
+    percent_correct = validate_guess(keys, fileids) 
+    print(percent_correct) 
 
-
+if __name__ == "__main__": 
+    main() 
 
 
 
