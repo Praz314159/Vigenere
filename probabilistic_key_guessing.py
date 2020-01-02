@@ -39,11 +39,20 @@ def gen_keys():
 # But, first I just want to check how often I'm guessing the correct key length with the 
 # current heuristic 
 def validate_guess(keys, fileids): 
+    
+    #creating string literal dictionary of keys in keybank                 
+    keylens = {}  
+    with open("key_bank.txt", "rt", encoding = "utf-8") as key_bank:
+        for count, line in enumerate(key_bank):
+            keylens.update({line: len(line)}) 
+
     #for each fileid, we will want to check whether the correct guess is made
     #for all keys
-    percent_correct = 0
     correct_count = 0 
     incorrect_count = 0
+
+    found = 0
+    not_found = 0
     for fileid in fileids:
         #print("PLAINTEXT: ", fileid) 
         #setting plaintext 
@@ -66,19 +75,26 @@ def validate_guess(keys, fileids):
                 #        keylens.get(key)) 
             else: 
                 correct_count += 1
+            
+            if keylens.get(key) in sorted_factor_counts[-5:]: 
+                found += 1
+            else: 
+                not_found += 1 
 
+    percent_top5 = (found)/(found + not_found) 
     percent_correct = (correct_count)/(correct_count + incorrect_count)
-    return percent_correct 
+    return percent_top5, percent_correct 
 
 def main(): 
     #generating random key bank 
     key_bank = gen_keys() 
-
+    
     #creating string literal dictionary of keys in keybank                 
     keylens = {}  
     with open("key_bank.txt", "rt", encoding = "utf-8") as key_bank:
         for count, line in enumerate(key_bank):
             keylens.update({line: len(line)}) 
+    
 
     #listifying keys 
     keys = list(keylens.keys())
@@ -86,8 +102,9 @@ def main():
     #getting list of fileids 
     fileids = corpus.gutenberg.fileids() 
 
-    percent_correct = validate_guess(keys, fileids) 
-    print(percent_correct) 
+    percent_top5, percent_correct = validate_guess(keys, fileids) 
+    print("% CORRECT: ", percent_correct) 
+    print("PERCENT CORRECT KEY LEN APPEARS IN FIVE MOST FREQUENCE FACTORS: ", percent_top5) 
 
 if __name__ == "__main__": 
     main() 

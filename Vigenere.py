@@ -317,7 +317,7 @@ most likely to occupy the place in the key representing the "residue class" that
 cipher segment. Once we have the most likely characters for each position in the key, 
 we brute force decrypt until we find a non-gibberish recovered text. 
 
-
+'''
 
 
 
