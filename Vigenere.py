@@ -13,20 +13,20 @@ import matplotlib.pylab as plt
 ################### INPUT #########################################
 '''
 # prompt user for file path
-plaintext_file_name = "plaintext.txt"#sys.argv[1]  
+plaintext_file_name = sys.argv[1]  
 
 #prompt user for file action mode 
-#mode = input("In what mode would you like to open the file r, w, a or rt?")
+mode = input("In what mode would you like to open the file r, w, a or rt?")
 
 #opening and storing file 
 f = open(plaintext_file_name, "rt")
 plaintext = f.read() 
 # prompt user for key 
-#key = sys.argv[2]  
+key = sys.argv[2]  
 
 #store sizes of key and plaintext 
-#key_size = len(key)
-#plain_text_size = len(plaintext) 
+key_size = len(key)
+plain_text_size = len(plaintext) 
 '''
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
@@ -58,6 +58,9 @@ def create_key_stream(key, plaintext):
 def encrypt(keystream, plaintext): 
     #note that open creates a file "ciphertext.txt" if the file doesn't already exist. If it does exist, 
     #clears the file contents 
+    plain_text_size = len(plaintext)
+    #print("PLAINTEXT SIZE: ", len(plaintext)) 
+    #print("KEYSTREAM SIZE: ", len(keystream))
     with open("ciphertext.txt", "w+", encoding = "utf-8") as ciphertext: 
         for i in range(plain_text_size):
             plain_ord = ord(plaintext[i])
@@ -76,14 +79,15 @@ def decrypt(keystream, cipherfile):
 
     cipher_f = open(cipherfile.name, "rt", encoding="utf8")
     ciphertext = cipher_f.read()
-    #ciphertext = cipher_f.read() 
+    cipher_text_size = len(ciphertext) 
+
     with open("recovered.txt", "w+", encoding = "utf8") as recovered_text:
-        for i in range(plain_text_size): 
+        for i in range(cipher_text_size): 
             recovered_text.write(chr((ord(ciphertext[i]) - ord(keystream[i])) % 255))
             #recovered_text = recovered_text + (chr((ord(ciphertext[i]) - ord(keystream[i])) % 255))
     
-    cipher_f.close()
-    recovered_text.close() 
+    #cipher_f.close()
+    #recovered_text.close() 
     return recovered_text 
 
 ######################### ANALYSIS ###########################################

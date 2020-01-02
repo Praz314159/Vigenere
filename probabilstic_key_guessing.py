@@ -8,7 +8,7 @@
 
 #import Kasisky_debug as kd 
 import Vigenere as vg 
-from nltk.book import * 
+#from nltk.book import * 
 from nltk import corpus
 import sys 
 
@@ -30,19 +30,22 @@ fileids = corpus.gutenberg.fileids()
 for fileid in fileids:
     #setting plaintext 
     plaintext = corpus.gutenberg.raw(fileid)
+    plaintext = plaintext[0:500]
     #encrypting for each key 
     for key in keys:
         correct = False 
-        keystream = vg.create_key_stream(key) 
-        ciphertext = vg.encrypt(keystream, plaintext)
-        
+        keystream = vg.create_key_stream(key, plaintext)
+        #print(len(keystream)) 
+        ciphertext_file = vg.encrypt(keystream, plaintext)
+        ciphertext = open(ciphertext_file.name, "rt", encoding = "utf-8").read() 
         #guessing key length 
         cipher_match_indices, cipher_matches = vg.find_matches(ciphertext) 
         key_length_guess = vg.guess_key_length(cipher_match_indices)
 
         if key_length_guess == keylens.get(key):
             correct = True
-            print(correct) 
+            print(correct, "| guess: ", key_length_guess, "| true: ", keylens.get(key), \
+                    "| plaintext: ", fileid) 
 
 
 #ideally, we are able to create a plot that has key length on the x axis and percent correct guesses
