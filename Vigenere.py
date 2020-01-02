@@ -10,24 +10,6 @@ import matplotlib.pylab as plt
 #               2) We repeat the key until it is the same length as the plaintext (this is known as the keystream  
 #               3) We then proceed character by character encrypting with e_i = (p_i + k_i) mod (26)
 
-################### INPUT #########################################
-'''
-# prompt user for file path
-plaintext_file_name = sys.argv[1]  
-
-#prompt user for file action mode 
-mode = input("In what mode would you like to open the file r, w, a or rt?")
-
-#opening and storing file 
-f = open(plaintext_file_name, "rt")
-plaintext = f.read() 
-# prompt user for key 
-key = sys.argv[2]  
-
-#store sizes of key and plaintext 
-key_size = len(key)
-plain_text_size = len(plaintext) 
-'''
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
 # creating keystream from key 
@@ -91,26 +73,7 @@ def decrypt(keystream, cipherfile):
     return recovered_text 
 
 ######################### ANALYSIS ###########################################
-
-# Here, we want to do some simply analysis to show how the Vigenere cipher works. We want to plot the character frequency of the plaintext file, then the character frequency of the ciphertext file. We can compare the frequency data in some interesting ways. Eventually, we might even be able to look at how various parameters of the key affect the character frequency data associated with the ciphertext. 
-
-# We also have the text of each document stored as 
-#   1) plaintext 
-#   2) ciphertext
-#   3) recovered 
-
-#first we create an array of all the ascii characters we are using in the vigenere cipher 
-
-ASCII_char_array = []
-
-for i in range(255):
-    ASCII_char_array.append(chr(i))
-
-##################################### KASISKI EXAMINATION ##########################################
-
-#Here, we take a ciphertext and return the most probable key, after finding the 
-#keylength by searching for repeated charactersequences in the ciphertext and 
-#analyzing the distances between them 
+######################### KASISKI EXAMINATION ################################
 
 #Some helper functions for the kasiski exam 
 
@@ -237,9 +200,13 @@ def kasiski_exam(ciphertext):
     return list(cipher_segments.values()) 
 
 
-######################################## FREQUENCY ANALYSIS ######################################
+######################################## FREQUENCY ANALYSIS ##################################
 
 def frequency_analysis(text): 
+    ASCII_char_array = []
+    for i in range(255):
+        ASCII_char_array.append(chr(i))
+
     characters = ASCII_char_array
     
     #building empty list that will store the frequency counts for each character
@@ -254,7 +221,8 @@ def frequency_analysis(text):
     for char in text:
         text_array.append(char)
 
-    #create dictionary associating characters with their counts and initializing all counts to 0  
+    #create dictionary associating characters with their counts and initializing 
+    #all counts to 0  
     char_count_dict = {} 
     for i in range(len(characters)):
             char_count_dict.update({characters[i]: 0}) 
@@ -275,88 +243,41 @@ def normalize_frequency(count_dict):
     # TO DO: normalize -- we just want count/len(count_dict) for each character. This may or may not be useful, who knows ... 
     pass
 
+def plot_frequencies(text, c):
+    text_counts = frequency_analysis(text)
+    plt.bar(text_counts.keys(), text_counts.values(), color = c)
+    plt.show() 
 
+def main(): 
+    # prompt user for file path
+    plaintext_file_name = sys.argv[1]  
+    #opening and storing file 
+    plaintext = open(plaintext_file_name, "rt").read()
+    # prompt user for key 
+    key = sys.argv[2]  
 
-'''
-##################################################### TESTING ###############################################
+    keystream = create_key_stream(key) #creating keystream 
+    ciphertext_file = encrypt(keystream, plaintext) #creating ciphertext file obj
+    recovered_plaintext_file = decrypt(keystream, ciphertext_file) #creating plaintext file obj
+    ciphertext = open(ciphertext_file.name, "rt", encoding = "utf8").read() 
+    recovered_plaintext = open(recovered_plaintext_file.name, "rt", encoding = "utf8").read() 
+  
+    ################## CRYPTANALYSIS ###################
 
-############ ENCRYPTION PLAINTEXT, DECRYPTING CIPHERTEXT ################
-key = "key"
-keystream = create_key_stream(key) #creating keystream 
-ciphertext_file = encrypt(keystream, plaintext) #encrypt createst ciphertext file obj
-recovered_plaintext_file = decrypt(keystream, ciphertext_file) #decrypte creates recovered plaintext file obj
+    #guess key_length 
+    cipher_match_indices, cipher_matches = find_matches(ciphertext) 
+    key_length = guess_key_length(cipher_match_indices) 
 
-ciphertext = open(ciphertext_file.name, "rt", encoding = "utf8").read() 
-recovered_plaintext = open(recovered_plaintext_file.name, "rt", encoding = "utf8").read() 
+    #generate cipher segments 
+    cipher_segments = kasiski_exam(ciphertext) 
+    #once we have the cipher segments, we have to run the frequency analysis on each 
+    #individual segment. Then we find what the highest frequency 
 
-print("Plaintext: ", plaintext)
-print("\n")
-print("Encrypted File: ", ciphertext)
-print("\n")
-print("Recovered Plaintext: ", recovered_plaintext)
-print("\n")
-
-if plaintext == recovered_plaintext: 
-    print("Congratulations, decryption successful!")
-else:
-    print("Oh no! The decryption wasn't successful...") 
-
-
-#################### CRYPTANALYSIS ###################
-
-print("CRYPTANALYSIS") 
-
-#guess key_length 
-cipher_match_indices, cipher_matches = find_matches(ciphertext) 
-key_length = guess_key_length(cipher_match_indices) 
-
-print("CIPHER MATCHES: ", cipher_matches)
-print("\n")
-print("CIPHER MATCH INDICES: ", cipher_match_indices)
-print("\n")
-#generate cipher segments 
-cipher_segments = kasiski_exam(ciphertext) 
-
-print("\n") 
-plaintext_match_indices, plain_matches = find_matches(plaintext) 
-
-print("PLAIN MATCHES: ", plain_matches) 
-print("\nPLAIN MATCH INDICES: ", plaintext_match_indices) 
-
-print("\nKEY LENGTH GUESS: ", key_length) 
-if key_length == len(key):
-    print("WE GUESSED CORRECT! KEY LENGTH IS: ", key_length)
-    print("\n") 
-else:
-    print("INCORRCT KEY LENGTH\n") 
-
-print(cipher_segments) 
-
-#getting frequency count dictionary for plaintext
-plaintext_counts = frequency_analysis(plaintext) 
-plt.bar(plaintext_counts.keys(), plaintext_counts.values(), color ="g") 
-
-#plain_lists = sorted(plaintext_counts.items()) #sorted by key, return a list of tuples 
-#plain_char, plain_count = zip(*plain_lists) #unpack list of pairs into two tuples and store in char and count 
-
-ciphertext_counts = frequency_analysis(ciphertext) 
-plt.bar(ciphertext_counts.keys(), ciphertext_counts.values(), color ='r') 
-
-#cipher_lists = sorted(ciphertext_counts.items()) 
-#cipher_char, cipher_count = zip(*cipher_lists) 
-
-#plt.plot(plain_char, plain_count) 
-#plt.plot(cipher_char, cipher_count) 
-#plt.show() 
-
-plt.show()
-
-# Now we've done a basic frequency analysis! But, this won't really help us crack a Vigenere cipher until we are able to guess the correct length of the key. Now, we use Kasiski examination and the Friedman test in order to determine the key length of the Vigener cipher. This will, in fact, be quite interesting considering the classic Vigenere Cipher uses only a 26 letter alphabet. Here, sicne we are using ASCII, we have an alphabet that is roughly 10 times as large.
-'''
-
-
-
-
-
-
-
+    print("\nKEY LENGTH GUESS: ", key_length) 
+    if key_length == len(key):
+        print("WE GUESSED CORRECT! KEY LENGTH IS: ", key_length)
+    else:
+        print("INCORRCT KEY LENGTH\n") 
+    
+if __name__ == "__main__":
+    main() 
