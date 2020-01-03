@@ -13,11 +13,12 @@ import matplotlib.pylab as plt
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
 # creating keystream from key 
-def create_key_stream(key, plaintext):
+def create_key_stream(key, plaintext, alphabet):
 
     keystream = ""
     key_size = len(key)
-    plain_text_size = len(plaintext) 
+    plain_text_size = len(plaintext)
+    alphabet_size = len(alphabet)
     # if the keysize is greater than plaintext size, then truncate key to size of plaintext. 
     if key_size > plain_text_size:
         print("You're using a One-Time Pad!") 
@@ -47,25 +48,24 @@ def encrypt(keystream, plaintext):
         for i in range(plain_text_size):
             plain_ord = ord(plaintext[i])
             keystream_ord = ord(keystream[i])
-            ciphertext.write( chr( (plain_ord + keystream_ord) % 255))
-            #ciphertext = ciphertext + (chr((ord(plaintext[i]) + ord(keystream[i])) % 255))
-    
+            ciphertext.write( chr( (plain_ord + keystream_ord) % alphabet_size))
+   
     #closing file     
     ciphertext.close()
     return ciphertext 
 
 #decrypting file 
-def decrypt(keystream, cipherfile): 
+def decrypt(keystream, cipherfile, alphabet): 
 
 # note that now ciphertext is a file object. So, the argument "ciphertext" should actually be the name of the file contianing the ciphertext. 
 
     cipher_f = open(cipherfile.name, "rt", encoding="utf8")
     ciphertext = cipher_f.read()
     cipher_text_size = len(ciphertext) 
-
+    alphabet_size = len(alphabet) 
     with open("recovered.txt", "w+", encoding = "utf8") as recovered_text:
         for i in range(cipher_text_size): 
-            recovered_text.write(chr((ord(ciphertext[i]) - ord(keystream[i])) % 255))
+            recovered_text.write(chr((ord(ciphertext[i]) - ord(keystream[i])) % alphabet_size)
    
     cipher_f.close()
     recovered_text.close() 
@@ -74,17 +74,13 @@ def decrypt(keystream, cipherfile):
 ######################### ANALYSIS ###########################################
 ######################### FREQUENCY ANALYSIS #################################
 
-def frequency_analysis(text): 
-    ASCII_char_array = []
-    for i in range(255):
-        ASCII_char_array.append(chr(i))
-
-    characters = ASCII_char_array
-    
+def frequency_analysis(text, alphabet): 
+    characters = alphabet
+    alphabet_size = len(alphabet) 
     #building empty list that will store the frequency counts for each character
     count_list = []
     i = 0
-    while i < 255: 
+    while i < alphabet_size: 
         count_list.append(0)
         i += 1 
 
@@ -102,7 +98,7 @@ def frequency_analysis(text):
     #counting characters and addding their counts to char_count_dict 
     for char in text_array:
         i = 0
-        while i < 255: 
+        while i < alphabet_size: 
             if char == characters[i]:
                 count_list[i] += 1
                 char_count_dict.update({char: count_list[i]}) 
@@ -173,7 +169,7 @@ def get_factors(n):
             factors.append(i)
     return factors 
 
-def guess_key_length(match_indices): 
+def likely_key_lengths(match_indices): 
     #computes the distances between pairs of consecutive elements of the match_indices
     #list, factors each of these distances, then counts the frequencies of each factor.
     #The most common factor is the most likely key length, and will be our guess 
@@ -218,7 +214,7 @@ def guess_key_length(match_indices):
     else:      
         sorted_factor_counts = sorted(factor_counts, key = factor_counts.get) 
         most_likely_lengths = sorted_factor_counts[-3:] 
-        key_length_guess = max(most_likely_lengths) 
+        #key_length_guess = max(most_likely_lengths) 
         #counts = list(factor_counts.values()) 
         #factors = list(factor_counts.keys()) 
         #key_length_guess = factors[counts.index(max(counts))] 
@@ -227,7 +223,7 @@ def guess_key_length(match_indices):
     # Rather, it should return the longest high frequency factor 
     # How do we guess intelligently, given this? 
 
-    return key_length_guess, most_likely_lengths, sorted_factor_counts, factor_counts  
+    return most_likely_lengths, sorted_factor_counts  
  
 
 def kasiski_exam(ciphertext): 
@@ -249,7 +245,14 @@ def kasiski_exam(ciphertext):
     
     return list(cipher_segments.values()) 
 
-def main(): 
+def main():
+    #creating alphabet
+    #default is using ASCII alphabet. 
+    char_array = []
+    for i in range(255):
+        ASCII_char_array.append(chr(i))
+    alphabet = char_array 
+
     # prompt user for file path
     plaintext_file_name = sys.argv[1]  
     #opening and storing file 
@@ -258,8 +261,8 @@ def main():
     key = sys.argv[2]  
 
     keystream = create_key_stream(key, plaintext) #creating keystream 
-    ciphertext_file = encrypt(keystream, plaintext) #creating ciphertext file obj
-    recovered_plaintext_file = decrypt(keystream, ciphertext_file) #creating plaintext file obj
+    ciphertext_file = encrypt(keystream, plaintext, alphabet) #creating ciphertext file obj
+    recovered_plaintext_file = decrypt(keystream, ciphertext_file, alphabet) #creating plaintext file obj
     ciphertext = open(ciphertext_file.name, "rt", encoding = "utf8").read() 
     recovered_plaintext = open(recovered_plaintext_file.name, "rt", encoding = "utf8").read() 
   
@@ -267,7 +270,7 @@ def main():
 
     #guess key_length 
     cipher_match_indices, cipher_matches = find_matches(ciphertext) 
-    key_length, most_likely_lengths, sorted_factor_counts, factor_counts = guess_key_length(cipher_match_indices) 
+    most_likely_lengths, sorted_factor_counts = guess_key_length(cipher_match_indices) 
     
     #generate cipher segments 
     cipher_segments = kasiski_exam(ciphertext) 
@@ -317,6 +320,10 @@ most likely to occupy the place in the key representing the "residue class" that
 cipher segment. Once we have the most likely characters for each position in the key, 
 we brute force decrypt until we find a non-gibberish recovered text. 
 
+-- modify text so that any alphabet can be used 
+-- use argparser to run cryptanalysis with preset alphabets (cyrillic, english, french, etc.) 
+-- use argparser to create cmd vigenere encryption tool 
+-- Perhaps move this to a object-oriented architecture 
 '''
 
 
