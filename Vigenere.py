@@ -9,7 +9,7 @@ import nltk as nlp
 import sys
 import os.path 
 import matplotlib.pylab as plt
-
+import itertools, re
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
 # creating keystream from key 
@@ -234,8 +234,8 @@ def likely_key_lengths(match_indices):
         sorted_factor_counts = -1
         factor_counts = -1
     else:      
-        sorted_factor_counts = sorted(factor_counts, key = factor_counts.get) 
-        most_likely_lengths = sorted_factor_counts[-3:] 
+        sorted_factor_counts = sorted(factor_counts, key = factor_counts.get, reverse = True) 
+        most_likely_lengths = sorted_factor_counts[:5] 
         #key_length_guess = max(most_likely_lengths) 
         #counts = list(factor_counts.values()) 
         #factors = list(factor_counts.keys()) 
@@ -244,9 +244,6 @@ def likely_key_lengths(match_indices):
     return most_likely_lengths, sorted_factor_counts  
  
 def cipher_cuts(ciphertext, likely_key_length): 
-    #match_indices, matches = find_matches(ciphertext) 
-    #key_length = guess_key_length(match_indices) 
-
     #we group every n_th character of the ciphertext
     #each of these groups are encrypted using one-alphabet substitution 
     cipher_segments = {} 
@@ -261,15 +258,30 @@ def cipher_cuts(ciphertext, likely_key_length):
     #Now we should have a dictionary that stores cipher_segments as values associated with the
     #residue classes of key_length 
     cipher_cuts = list(cipher_segments.values()) 
-    
+
     return cipher_cuts 
 
-def kasiski_exam(text, likely_key_lens, cipher_cuts, alphabet, alphabet_by_frequency): 
+def get_key_combos(candidate_key_chars, likely_key_len):
+    #We get a dictionary that gives candidate characters for each position in the key string 
+    #The goal is to return a list of all the possible keys 
+    candidate_keys = []
+    #I have no idea how this iteration works .... return to 
+    for indexes in itertools.product(range(4), repeat = likely_len):
+            key_candidate = ""
+            for i in range(likely_len):
+                key_candidate += candidate_key_chars[i][indexes[i]][0]
+                candidate_keys.append(key_candidate) 
+    
+    return candidate_keys 
+
+
+def kasiski_exam(ciphertext, likely_key_lens, cipher_cuts, alphabet, alphabet_by_frequency): 
     #function will return the most likely key 
     alphabet_size = len(alphabet)
+    best_key_guess = ""
     for likely_len in likely_key_lens:
-        cipher_cuts = cipher_cuts(text, likely_len)
-        candidate_key_chars = {}
+        cipher_cuts = cipher_cuts(ciphertext, likely_len)
+        candidate_key_chars = []
         for i in range(len(cipher_cuts)):
             cut = cipher_cuts[i]
             cut_match_score_dict = {}
@@ -279,26 +291,38 @@ def kasiski_exam(text, likely_key_lens, cipher_cuts, alphabet, alphabet_by_frequ
                 for j in range(len(cut)):
                     decrypted_cut += chr((ord(cut[j]) - ord(char)) % alphabet_size)
         
-                match_score = frequency_match_score(text, alphabet, alphabet_by_frequency)
+                match_score = frequency_match_score(ciphertext, alphabet, alphabet_by_frequency)
                 cut_match_score_dict.update({char: match_score})
             #now we have a dictionary of match scores for each char in the alphabet 
             #we want to get the chars with the max scores from the dictionary
             #if multiple chars have the same max match scores, then we want all of them 
             #getting max scores 
-            sorted_match_scores = sorted(cut_match_score_dict, key = cut_match_score_dict.get)
-            candidates = []
-            for k in range(len(sorted_match_scores)-1, -1, -1):
-                while sorted_match_scores[k] == sorted_match_scores[-1]:
-                    candidate = sorted_match_score[k]
-                    candidates.append(candidate) 
-            #now for each position in the key, we have a set of candidate characters 
-            candidate_key_chars.update({i: candidates})
+            sorted_match_scores = sorted(cut_match_score_dict, key = cut_match_score_dict.get,\
+                    reverse = True)
+            candidates = sorted_match_scores[:4]
+            #instead of dictionary, create list of lists that is length likely_len
+            candidate_key_chars.append(candidates)
 
-        #for each likely key length, we have a number of combinations of possible keys 
-        #we attempt decryption with each of the possible keys for each likely length
-        #then determine if gibberish or actual words or something sensible is returned
-        #TO DO:     
+        #getting all possible keys given best guesses about which chars comprise the key of a 
+        #given length 
+        possible_keys = get_key_combos(candidate_key_chars, likely_len)
 
+        #brute forcing through possible keys to see if any of them are plausible
+        #only one should actually produce coherent text in english 
+        for key in possible_keys: 
+            keystream = create_key_stream(key, text)
+            trial_recovery_file = decrypt(ciphertext, keystream, alphabet) #ciphertext not file form
+            trial_recovery_text = open(trial_recovery_file.name, "rt", encoding = "utf-8").read()
+
+            if is_english(trial_recovery_text) == True: 
+                best_key_guess = key 
+            else:
+                pass
+
+    if best_key_guess == "":
+        print("Reasonable key guess not found. Consider using manual mode to break the cipher.") 
+    
+    return best_key_guess 
 
 def main():
     #creating alphabet
@@ -361,8 +385,10 @@ Let's do a review of what we have at the moment First, we have a bunch of method
     9. find_matches()
     10. get_factors()
     11. guess_key_length() 
-    12. kasiski_exam() 
-    13. main() 
+    12. cipher_cuts()
+    13. get_key_combos()
+    14: kasiski_exam()
+    15. main() 
 
 Currently, our main challenge is that it's difficult to guess the correct key_length.
 This isn't so bad, though. We can check what percentage of the time the correct key is within
