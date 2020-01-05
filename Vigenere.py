@@ -10,6 +10,7 @@ import sys
 import os.path 
 import matplotlib.pylab as plt
 import itertools, re
+import io
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
 # creating keystream from key 
@@ -37,39 +38,48 @@ def create_key_stream(key, plaintext, alphabet):
 
     return keystream 
 
-# encrypting file 
-def encrypt(keystream, plaintext): 
-    #note that open creates a file "ciphertext.txt" if the file doesn't already exist. If it does exist, 
-    #clears the file contents 
+#encrypting file: takes a plaintext file and returns both ciphertext string literal
+# and ciphertext file 
+def encrypt(keystream, plaintext_file_name):
     plain_text_size = len(plaintext)
-    #print("PLAINTEXT SIZE: ", len(plaintext)) 
-    #print("KEYSTREAM SIZE: ", len(keystream))
-    with open("ciphertext.txt", "w+", encoding = "utf-8") as ciphertext: 
+    plaintext = open(plaintext_file_name, "rt", encoding = "utf-8").read() 
+
+    with open("ciphertext.txt", "w+", encoding = "utf-8") as ciphertext_file: 
         for i in range(plain_text_size):
             plain_ord = ord(plaintext[i])
             keystream_ord = ord(keystream[i])
-            ciphertext.write( chr( (plain_ord + keystream_ord) % alphabet_size))
-   
-    #closing file     
-    ciphertext.close()
-    return ciphertext 
+            ciphertext_file.write( chr( (plain_ord + keystream_ord) % alphabet_size))
+    
+    #getting ciphertext as string literal  
+    ciphertext = ciphertext_file.read() 
+    
+    #closing files     
+    ciphertext_file.close()
+    plaintext_file.close() 
 
-#decrypting file 
-def decrypt(keystream, cipherfile, alphabet): 
+    return ciphertext, ciphertext_file  
+
+#decrypting file: takes a ciphertext file and returns the recovered text as both a string literal
+#and as a file 
+def decrypt(keystream, ciphertext_file_name, alphabet): 
 
 # note that now ciphertext is a file object. So, the argument "ciphertext" should actually be the name of the file contianing the ciphertext. 
 
-    cipher_f = open(cipherfile.name, "rt", encoding="utf8")
-    ciphertext = cipher_f.read()
+    ciphertext = open(ciphertext_file_name, "rt", encoding="utf8").read()
     cipher_text_size = len(ciphertext) 
-    alphabet_size = len(alphabet) 
-    with open("recovered.txt", "w+", encoding = "utf8") as recovered_text:
+    alphabet_size = len(alphabet)
+
+    with open("recovered.txt", "w+", encoding = "utf8") as recovered_text_file:
         for i in range(cipher_text_size): 
-            recovered_text.write(chr((ord(ciphertext[i]) - ord(keystream[i])) % alphabet_size)
+            recovered_text_file.write(chr((ord(ciphertext[i]) - ord(keystream[i])) % alphabet_size)
     
-    cipher_f.close()
-    recovered_text.close() 
-    return recovered_text 
+    #getting recovered text as string literal
+    recovered_text = open(recovered_text_file.name, "rt", encoding = "utf-8").read() 
+    
+    #closing files 
+    ciphertext_file.close()
+    recovered_text_file.close() 
+    return recovered_text, recovered_text_file 
 
 ######################### ANALYSIS ###########################################
 ######################### FREQUENCY ANALYSIS #################################
@@ -191,10 +201,11 @@ def get_factors(n):
             factors.append(i)
     return factors 
 
-def likely_key_lengths(match_indices): 
+def likely_key_lengths(ciphertext): 
     #computes the distances between pairs of consecutive elements of the match_indices
     #list, factors each of these distances, then counts the frequencies of each factor.
     #The most common factor is the most likely key length, and will be our guess 
+    match_indices, matches = find_matches(ciphertext) 
     match_dists = [] 
     
     #Getting distances between starting index of repeated sequences 
@@ -236,11 +247,7 @@ def likely_key_lengths(match_indices):
     else:      
         sorted_factor_counts = sorted(factor_counts, key = factor_counts.get, reverse = True) 
         most_likely_lengths = sorted_factor_counts[:5] 
-        #key_length_guess = max(most_likely_lengths) 
-        #counts = list(factor_counts.values()) 
-        #factors = list(factor_counts.keys()) 
-        #key_length_guess = factors[counts.index(max(counts))] 
-    
+
     return most_likely_lengths, sorted_factor_counts  
  
 def cipher_cuts(ciphertext, likely_key_length): 
@@ -256,7 +263,7 @@ def cipher_cuts(ciphertext, likely_key_length):
                     + ciphertext[i]
 
     #Now we should have a dictionary that stores cipher_segments as values associated with the
-    #residue classes of key_length 
+    #residue classes of key_length
     cipher_cuts = list(cipher_segments.values()) 
 
     return cipher_cuts 
@@ -274,8 +281,11 @@ def get_key_combos(candidate_key_chars, likely_key_len):
     
     return candidate_keys 
 
-
-def kasiski_exam(ciphertext, likely_key_lens, cipher_cuts, alphabet, alphabet_by_frequency): 
+def kasiski_exam_hack(ciphertext_file, alphabet, alphabet_by_frequency):
+    
+    ciphertext = open(ciphertext_file.name, "rt", encoding = "utf-8").read() 
+    likely_lens, sorted_factor_counts = likely_key_lengths(ciphertext) 
+    
     #function will return the most likely key 
     alphabet_size = len(alphabet)
     best_key_guess = ""
@@ -313,14 +323,15 @@ def kasiski_exam(ciphertext, likely_key_lens, cipher_cuts, alphabet, alphabet_by
             keystream = create_key_stream(key, text)
             trial_recovery_file = decrypt(ciphertext, keystream, alphabet) #ciphertext not file form
             trial_recovery_text = open(trial_recovery_file.name, "rt", encoding = "utf-8").read()
-
+            
+            #write is_english method 
             if is_english(trial_recovery_text) == True: 
                 best_key_guess = key 
             else:
                 pass
 
     if best_key_guess == "":
-        print("Reasonable key guess not found. Consider using manual mode to break the cipher.") 
+        print("Reasonable key guess not found. Consider using manual hack mode to break the cipher.") 
     
     return best_key_guess 
 
@@ -350,7 +361,14 @@ def main():
     recovered_plaintext = open(recovered_plaintext_file.name, "rt", encoding = "utf8").read() 
   
     ################## CRYPTANALYSIS ###################
-
+    #do some text cleaning first 
+    best_key_guess = kasiski_exam_hack(ciphertext_file.name, alphabet, alphabet_by_frequency) 
+    
+    if best_key_guess == key: 
+        print("You are a motherfucking beast")
+    else: 
+        print("You sad sack of shit") 
+    ''' 
     #guess key_length 
     cipher_match_indices, cipher_matches = find_matches(ciphertext) 
     most_likely_lengths, sorted_factor_counts = guess_key_length(cipher_match_indices) 
@@ -359,14 +377,14 @@ def main():
     cipher_segments = kasiski_exam(ciphertext) 
     #once we have the cipher segments, we have to run the frequency analysis on each 
     #individual segment. Then we find what the highest frequency 
-
+    
     print("KEY LENGTH GUESS: ", key_length) 
     if key_length == len(key):
         print("WE GUESSED CORRECT! KEY LENGTH IS: ", key_length)
     else:
         print("INCORRCT KEY LENGTH")
         print(sorted_factor_counts)
-    
+   '''
 if __name__ == "__main__":
     main() 
 
