@@ -1,8 +1,8 @@
 # This is a vigenere encryption tool. The purpose of this code is to take as input some text, encrypt it, then return the ecrypted message. 
 # Recall how the vigenere cipher works. It is a polyalphabetic cipher that does the following: 
-#               1) We choose a key
-#               2) We repeat the key until it is the same length as the plaintext (this is known as the keystream  
-#               3) We then proceed character by character encrypting with e_i = (p_i + k_i) mod (26)
+#   1) We choose a key
+#   2) We repeat the key until it is the same length as the plaintext (this is known as the keystream  
+#   3) We then proceed character by character encrypting with e_i = (p_i + k_i) mod (26)
 
 import numpy as np
 import nltk as nlp 
@@ -20,18 +20,14 @@ def create_key_stream(key, plaintext, alphabet):
     key_size = len(key)
     plain_text_size = len(plaintext)
     alphabet_size = len(alphabet)
-    # if the keysize is greater than plaintext size, then truncate key to size of plaintext. 
+ 
     if key_size > plain_text_size:
         print("You're using a One-Time Pad!") 
         for i in range(plain_text_size): 
             keystream = keystream + key[i]
-
-    # if key_size < plain_text_size 
     elif key_size < plain_text_size: 
         for i in range(plain_text_size): 
-            keystream = keystream + key[i % key_size]
-
-    # if key_size = plain_text_size --> in this case, the cipher is a one time pad 
+            keystream = keystream + key[i % key_size] 
     else: 
         keystream = key
         print("You're using a One-Time Pad!") 
@@ -49,11 +45,9 @@ def encrypt(keystream, plaintext_file_name):
             plain_ord = ord(plaintext[i])
             keystream_ord = ord(keystream[i])
             ciphertext_file.write( chr( (plain_ord + keystream_ord) % alphabet_size))
-    
-    #getting ciphertext as string literal  
+      
     ciphertext = ciphertext_file.read() 
-    
-    #closing files     
+      
     ciphertext_file.close()
     plaintext_file.close() 
 
@@ -62,9 +56,6 @@ def encrypt(keystream, plaintext_file_name):
 #decrypting file: takes a ciphertext file and returns the recovered text as both a string literal
 #and as a file 
 def decrypt(keystream, ciphertext_file_name, alphabet): 
-
-# note that now ciphertext is a file object. So, the argument "ciphertext" should actually be the name of the file contianing the ciphertext. 
-
     ciphertext = open(ciphertext_file_name, "rt", encoding="utf8").read()
     cipher_text_size = len(ciphertext) 
     alphabet_size = len(alphabet)
@@ -73,10 +64,8 @@ def decrypt(keystream, ciphertext_file_name, alphabet):
         for i in range(cipher_text_size): 
             recovered_text_file.write(chr((ord(ciphertext[i]) - ord(keystream[i])) % alphabet_size)
     
-    #getting recovered text as string literal
     recovered_text = open(recovered_text_file.name, "rt", encoding = "utf-8").read() 
-    
-    #closing files 
+     
     ciphertext_file.close()
     recovered_text_file.close() 
     return recovered_text, recovered_text_file 
@@ -118,12 +107,12 @@ def frequency_analysis(text, alphabet):
     return char_count_dict 
 
 def frequency_order(text, alphabet):
-    char_counts = frequency_analysis(text, alphabet) #getting dictionary of frequency counts
-    sorted_char_freq = sorted(char_counts, key = char_counts.get) #sorting chars by frequency
+    char_counts = frequency_analysis(text, alphabet)
+    sorted_char_freq = sorted(char_counts, key = char_counts.get, reverse = True)
   
 def frequency_match_score(text, alphabet, alphabet_by_frequency):
     #alphabet_by_frequency is a sorted list of the alphabet by general frequency in language
-    text_freq_order = frequency_order(text, alphabet) #most common at end of list  
+    text_freq_order = frequency_order(text, alphabet)  
     match_score = 0 
     for common_char in alphabet_by_frequency[:6]:
         if common_char in text_freq_order[-6:]: 
@@ -140,7 +129,8 @@ def frequency_match_score(text, alphabet, alphabet_by_frequency):
     return match_score 
     
 def normalize_frequency(count_dict):
-    # TO DO: normalize -- we just want count/len(count_dict) for each character. This may or may not be useful, who knows ... 
+    # TO DO: normalize -- we just want count/len(count_dict) for each character. 
+    #This may or may not be useful, who knows ... 
     pass
 
 def plot_frequencies(text, c):
@@ -152,8 +142,9 @@ def plot_frequencies(text, c):
 
 #Some helper functions for the kasiski exam 
 
-def disjoint(start_1, end_1, start_2, end_2):
-    #we check whether two intervals are disjoint or not 
+#helper function to check (if necessary) whether two sequences
+#disjoint or not 
+def disjoint(start_1, end_1, start_2, end_2):  
     disjoint = True 
     # if condition is true, then intervals are overlapping 
     if start_1 <= end_2 and start_2 <= end_1:
@@ -193,8 +184,8 @@ def find_matches(text):
 
     return index_matches, matches
        
+#helper function to get all factors of a number
 def get_factors(n):
-    #get all factors helper function
     factors = [] 
     for i in range(1, n+1): 
         if n%i == 0:
@@ -203,8 +194,7 @@ def get_factors(n):
 
 def likely_key_lengths(ciphertext): 
     #computes the distances between pairs of consecutive elements of the match_indices
-    #list, factors each of these distances, then counts the frequencies of each factor.
-    #The most common factor is the most likely key length, and will be our guess 
+    #list, factors each of these distances, then counts the frequencies of each factor. 
     match_indices, matches = find_matches(ciphertext) 
     match_dists = [] 
     
@@ -215,30 +205,23 @@ def likely_key_lengths(ciphertext):
             match_dists.append(match_distance) 
 
     #print("Distances: ", match_dists) 
-    #we create a dictionary that stores factors and their counts
     factor_counts = {} 
     for i in range(len(match_dists)):
-        #getting the factors for each distance 
         factors = get_factors(match_dists[i]) 
-
         #print("Factors of ", match_dists[i], "are: ", factors)
+
         for j in range(len(factors)): 
             if factors[j] != 1: 
                 if factors[j] not in factor_counts.keys():
-                    #if the factor isn't a key in the dictionary
-                    #add the factor to the dictionary and 
-                    #update its count to 1
                     factor_counts.update({factors[j]: 1})
                 else:
-                    #if the factor is already a key in the dictionary
-                    #update the factor's count 
                     factor_counts[factors[j]] += 1
             else:
                 pass 
     
     #we now have a dictionary that stores all the factors of all the distances between 
-    #repeated sequences and their frequencies. We want the factor with the max frequency.
-    
+    #repeated sequences and their frequencies. We want the most likely key lengths, which
+    #correspond to the most frequenctly occuring factors. We'll take the five most common. 
     if not factor_counts: 
         key_length_guess = -1
         most_likely_lengths = -1
@@ -262,10 +245,7 @@ def cipher_cuts(ciphertext, likely_key_length):
             cipher_segments[i % likely_key_length] = cipher_segments[i % likely_key_length]\
                     + ciphertext[i]
 
-    #Now we should have a dictionary that stores cipher_segments as values associated with the
-    #residue classes of key_length
     cipher_cuts = list(cipher_segments.values()) 
-
     return cipher_cuts 
 
 def get_key_combos(candidate_key_chars, likely_key_len):
@@ -281,12 +261,12 @@ def get_key_combos(candidate_key_chars, likely_key_len):
     
     return candidate_keys 
 
+#function should return the most likely key 
 def kasiski_exam_hack(ciphertext_file, alphabet, alphabet_by_frequency):
     
     ciphertext = open(ciphertext_file.name, "rt", encoding = "utf-8").read() 
     likely_lens, sorted_factor_counts = likely_key_lengths(ciphertext) 
-    
-    #function will return the most likely key 
+
     alphabet_size = len(alphabet)
     best_key_guess = ""
     for likely_len in likely_key_lens:
@@ -336,27 +316,21 @@ def kasiski_exam_hack(ciphertext_file, alphabet, alphabet_by_frequency):
     return best_key_guess 
 
 def main():
-    #creating alphabet
-    #default is using ASCII alphabet. 
+    #creating alphabet default is using ASCII alphabet. 
     char_array = []
     for i in range(255):
         ASCII_char_array.append(chr(i))
-    alphabet = char_array 
     
-    #english alphabet sorted by most common characters
+    alphabet = char_array 
     alphabet_by_freq = list("ETAOINSHRDLCUMWFGYPBVKJXQZ")
     
-    
-    # prompt user for file path
-    plaintext_file_name = sys.argv[1]  
-    #opening and storing file 
+    plaintext_file_name = sys.argv[1]   
     plaintext = open(plaintext_file_name, "rt").read()
-    # prompt user for key 
     key = sys.argv[2]  
 
-    keystream = create_key_stream(key, plaintext) #creating keystream 
-    ciphertext_file = encrypt(keystream, plaintext, alphabet) #creating ciphertext file obj
-    recovered_plaintext_file = decrypt(keystream, ciphertext_file, alphabet) #creating plaintext file obj
+    keystream = create_key_stream(key, plaintext) 
+    ciphertext_file = encrypt(keystream, plaintext, alphabet)
+    recovered_plaintext_file = decrypt(keystream, ciphertext_file, alphabet)
     ciphertext = open(ciphertext_file.name, "rt", encoding = "utf8").read() 
     recovered_plaintext = open(recovered_plaintext_file.name, "rt", encoding = "utf8").read() 
   
