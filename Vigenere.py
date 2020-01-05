@@ -11,6 +11,7 @@ import os.path
 import matplotlib.pylab as plt
 import itertools, re
 import io
+
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
 # creating keystream from key 
@@ -34,11 +35,13 @@ def create_key_stream(key, plaintext, alphabet):
 
     return keystream 
 
+
 #encrypting file: takes a plaintext file and returns both ciphertext string literal
 # and ciphertext file 
-def encrypt(keystream, plaintext_file_name):
-    plain_text_size = len(plaintext)
+def encrypt(keystream, plaintext_file_name, alphabet):
     plaintext = open(plaintext_file_name, "rt", encoding = "utf-8").read() 
+    plain_text_size = len(plaintext)
+    alphabet_size = len(alphabet)
 
     with open("ciphertext.txt", "w+", encoding = "utf-8") as ciphertext_file: 
         for i in range(plain_text_size):
@@ -53,6 +56,7 @@ def encrypt(keystream, plaintext_file_name):
 
     return ciphertext, ciphertext_file  
 
+
 #decrypting file: takes a ciphertext file and returns the recovered text as both a string literal
 #and as a file 
 def decrypt(keystream, ciphertext_file_name, alphabet): 
@@ -62,7 +66,7 @@ def decrypt(keystream, ciphertext_file_name, alphabet):
 
     with open("recovered.txt", "w+", encoding = "utf8") as recovered_text_file:
         for i in range(cipher_text_size): 
-            recovered_text_file.write(chr((ord(ciphertext[i]) - ord(keystream[i])) % alphabet_size)
+            recovered_text_file.write(chr((ord(ciphertext[i]) - ord(keystream[i])) % alphabet_size))
     
     recovered_text = open(recovered_text_file.name, "rt", encoding = "utf-8").read() 
      
@@ -70,12 +74,12 @@ def decrypt(keystream, ciphertext_file_name, alphabet):
     recovered_text_file.close() 
     return recovered_text, recovered_text_file 
 
-######################### ANALYSIS ###########################################
 ######################### FREQUENCY ANALYSIS #################################
 
 def frequency_analysis(text, alphabet): 
     characters = alphabet
-    alphabet_size = len(alphabet) 
+    alphabet_size = len(alphabet)
+
     #building empty list that will store the frequency counts for each character
     count_list = []
     i = 0
@@ -103,13 +107,16 @@ def frequency_analysis(text, alphabet):
                 char_count_dict.update({char: count_list[i]}) 
             i += 1
 
-    #create a dictionary associating characters with their 
     return char_count_dict 
 
+
+#helper function that returns the alphabet sorted by character
+#in the text
 def frequency_order(text, alphabet):
     char_counts = frequency_analysis(text, alphabet)
     sorted_char_freq = sorted(char_counts, key = char_counts.get, reverse = True)
-  
+
+
 def frequency_match_score(text, alphabet, alphabet_by_frequency):
     #alphabet_by_frequency is a sorted list of the alphabet by general frequency in language
     text_freq_order = frequency_order(text, alphabet)  
@@ -127,20 +134,45 @@ def frequency_match_score(text, alphabet, alphabet_by_frequency):
             pass 
 
     return match_score 
-    
+
+
 def normalize_frequency(count_dict):
     # TO DO: normalize -- we just want count/len(count_dict) for each character. 
     #This may or may not be useful, who knows ... 
     pass
 
-def plot_frequencies(text, c):
+
+#plots character frequencies as a simple bar graph
+def plot_frequencies(text, bar_color):
     text_counts = frequency_analysis(text)
-    plt.bar(text_counts.keys(), text_counts.values(), color = c)
+    plt.bar(text_counts.keys(), text_counts.values(), color = bar_color)
     plt.show() 
 
-######################### KASISKI EXAMINATION ################################
 
-#Some helper functions for the kasiski exam 
+
+######################### NLP FUNCTIONARLY ###################################
+
+def clean_text(text):
+    '''
+    TO DO: 
+
+    1. Everything to upper or lower case 
+    2. Get rid of punctuation 
+    3. Get rid of spaces 
+
+    '''
+    pass 
+
+def is_english(text): 
+    #Should check if a text is likely to be english or not 
+    #perhaps return a probability? 
+    #It would be super useful if there was some sort of NLP ML 
+    #that could recognize whether a certain text was the same 
+    #language as that of a corpus of text. 
+    pass 
+
+
+######################### KASISKI EXAMINATION ################################
 
 #helper function to check (if necessary) whether two sequences
 #disjoint or not 
@@ -152,6 +184,10 @@ def disjoint(start_1, end_1, start_2, end_2):
 
     return disjoint 
 
+
+#helper function to all the repeated sequences 
+#in a text and the indices at which those repeated 
+#sequences occur. 
 def find_matches(text): 
     index_matches = []
     matches = [] 
@@ -183,7 +219,8 @@ def find_matches(text):
                 pass 
 
     return index_matches, matches
-       
+
+
 #helper function to get all factors of a number
 def get_factors(n):
     factors = [] 
@@ -191,6 +228,7 @@ def get_factors(n):
         if n%i == 0:
             factors.append(i)
     return factors 
+
 
 def likely_key_lengths(ciphertext): 
     #computes the distances between pairs of consecutive elements of the match_indices
@@ -232,7 +270,8 @@ def likely_key_lengths(ciphertext):
         most_likely_lengths = sorted_factor_counts[:5] 
 
     return most_likely_lengths, sorted_factor_counts  
- 
+
+
 def cipher_cuts(ciphertext, likely_key_length): 
     #we group every n_th character of the ciphertext
     #each of these groups are encrypted using one-alphabet substitution 
@@ -248,10 +287,12 @@ def cipher_cuts(ciphertext, likely_key_length):
     cipher_cuts = list(cipher_segments.values()) 
     return cipher_cuts 
 
+
+#Produces a list of all possible keys given a likely key length and 
+#how the characters that likely occupy each position in the key
 def get_key_combos(candidate_key_chars, likely_key_len):
-    #We get a dictionary that gives candidate characters for each position in the key string 
-    #The goal is to return a list of all the possible keys 
     candidate_keys = []
+
     #I have no idea how this iteration works .... return to 
     for indexes in itertools.product(range(4), repeat = likely_len):
             key_candidate = ""
@@ -260,6 +301,7 @@ def get_key_combos(candidate_key_chars, likely_key_len):
                 candidate_keys.append(key_candidate) 
     
     return candidate_keys 
+
 
 #function should return the most likely key 
 def kasiski_exam_hack(ciphertext_file, alphabet, alphabet_by_frequency):
@@ -301,17 +343,18 @@ def kasiski_exam_hack(ciphertext_file, alphabet, alphabet_by_frequency):
         #only one should actually produce coherent text in english 
         for key in possible_keys: 
             keystream = create_key_stream(key, text)
-            trial_recovery_file = decrypt(ciphertext, keystream, alphabet) #ciphertext not file form
+            trial_recovery_file = decrypt(ciphertext, keystream, alphabet) 
             trial_recovery_text = open(trial_recovery_file.name, "rt", encoding = "utf-8").read()
             
-            #write is_english method 
+            #TO DO: write is_english method 
             if is_english(trial_recovery_text) == True: 
                 best_key_guess = key 
             else:
                 pass
 
     if best_key_guess == "":
-        print("Reasonable key guess not found. Consider using manual hack mode to break the cipher.") 
+        print("Reasonable key guess not found. \
+               Consider using manual hack mode to break the cipher.") 
     
     return best_key_guess 
 
@@ -319,7 +362,7 @@ def main():
     #creating alphabet default is using ASCII alphabet. 
     char_array = []
     for i in range(255):
-        ASCII_char_array.append(chr(i))
+        char_array.append(chr(i))
     
     alphabet = char_array 
     alphabet_by_freq = list("ETAOINSHRDLCUMWFGYPBVKJXQZ")
@@ -342,23 +385,7 @@ def main():
         print("You are a motherfucking beast")
     else: 
         print("You sad sack of shit") 
-    ''' 
-    #guess key_length 
-    cipher_match_indices, cipher_matches = find_matches(ciphertext) 
-    most_likely_lengths, sorted_factor_counts = guess_key_length(cipher_match_indices) 
-    
-    #generate cipher segments 
-    cipher_segments = kasiski_exam(ciphertext) 
-    #once we have the cipher segments, we have to run the frequency analysis on each 
-    #individual segment. Then we find what the highest frequency 
-    
-    print("KEY LENGTH GUESS: ", key_length) 
-    if key_length == len(key):
-        print("WE GUESSED CORRECT! KEY LENGTH IS: ", key_length)
-    else:
-        print("INCORRCT KEY LENGTH")
-        print(sorted_factor_counts)
-   '''
+   
 if __name__ == "__main__":
     main() 
 
