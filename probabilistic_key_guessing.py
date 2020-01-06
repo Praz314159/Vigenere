@@ -10,14 +10,15 @@ import Vigenere as vg
 from nltk import corpus
 import sys 
 import random
+import matplotlib.pylab as plt
 
 #We want to generate various keys of length 2-30 
 #each key length, we generate 5 random keys
-def gen_keys():
+def gen_keys(max_key_len):
     start = 0 
     stop = 255
     with open("key_bank.txt", "w+", encoding = "utf-8") as key_bank: 
-        for keylen in range(2,25): 
+        for keylen in range(2,max_key_len): 
             #generate random key from ASCII characters --> range 0-255  
             for keynum in range(5):
                 key = "" 
@@ -31,17 +32,25 @@ def gen_keys():
 
     return key_bank 
 
+def get_key_lens(keybank_name):
+    keylens = {}  
+    with open(keybank_name, "rt", encoding = "utf-8") as key_bank:
+        for count, line in enumerate(key_bank):
+            keylens.update({line: len(line)}) 
+    
+    return keylens 
+
 # we have nltk.book texts. These are texts 1 - 10 
 # for each of these texts, we want to return the sorted factor frequency list 
 # But, first I just want to check how often I'm guessing the correct key length with the 
 # current heuristic 
-def validate_guess(keylens, fileids, alphabet): 
-                      
+def validate_guess(keylens, fileids, alphabet, num_candidates):                  
     keys = list(keylens.keys()) 
     #for each fileid, we will want to check whether the correct guess is made
     #for all keys
     found = 0
     not_found = 0
+    indecipherable = 0
  
     for fileid in fileids:
         #print("PLAINTEXT: ", fileid) 
@@ -51,21 +60,32 @@ def validate_guess(keylens, fileids, alphabet):
  
         for key in keys: 
             keystream = vg.create_key_stream(key, plaintext, alphabet) 
-            ciphertext, ciphertext_file = vg.encrypt(keystream, fileid, alphabet) 
-            ciphertext = ciphertext[0:300] 
+            ciphertext, ciphertext_file = vg.encrypt(keystream, plaintext, alphabet) 
+            #ciphertext = ciphertext[0:300] 
 
             #getting most likely key lengths
             cipher_match_indices, cipher_matches = vg.find_matches(ciphertext) 
-            most_likely_lengths, factor_counts = vg.likely_key_lengths(ciphertext)
-           
-            if keylens.get(key) in most_likely_lengths: 
-                found += 1
-            else: 
-                not_found += 1 
+            most_likely_lengths, sorted_factor_counts = vg.likely_key_lengths(ciphertext)
+            
+            if type(sorted_factor_counts) == int:
+                indecipherable += 1
+                continue 
 
-    percent_top5 = (found)/(found + not_found) 
-    return percent_top5
+            most_likely_lengths = sorted_factor_counts[:num_candidates]
+            #print("Included: ", keylens.get(key) in most_likely_lengths, "|Key length: ", keylens.get(key), "|Choices: ", most_likely_lengths)
+            if keylens.get(key) != 1:
+                if keylens.get(key) in most_likely_lengths: 
+                    #print("Included: ", True, "|Key length: ", keylens.get(key), "|Choices: ", most_likely_lengths)
+                    found += 1
+                else: 
+                    #print("Included: ", False, "|Key length: ", keylens.get(key), "|Choices: ",\
+                    #        most_likely_lengths, "|Next: ", sorted_factor_counts[:num_candidates+1])
+                    not_found += 1 
 
+    percent_top5 = (found)/(found + not_found)
+    percent_indecipherable = (indecipherable)/(found+not_found+indecipherable)
+    return percent_top5, percent_indecipherable
+    
 def main(): 
     #creating ASCII alphabet 
     char_array = []
@@ -73,26 +93,44 @@ def main():
         char_array.append(chr(i))
     
     alphabet = char_array 
+    
+    #max_key_len = int(sys.argv[1])
+    num_candidates = int(sys.argv[1])
 
     #generating random key bank 
-    key_bank = gen_keys() 
-    
-    #creating string literal dictionary of keys in keybank                 
-    keylens = {}  
-    with open("key_bank.txt", "rt", encoding = "utf-8") as key_bank:
-        for count, line in enumerate(key_bank):
-            keylens.update({line: len(line)}) 
-    
-    #listifying keys 
-    #keys = list(keylens.keys())
+    key_bank = gen_keys(42) 
     
     #getting list of fileids 
-    fileids = corpus.gutenberg.fileids() 
-    
-    percent_top5 = validate_guess(keylens, fileids, alphabet) 
-    print("% CORRECT: ", percent_correct) 
-    print("PERCENT CORRECT KEY LEN APPEARS IN FIVE MOST FREQUENCE FACTORS: ", percent_top5) 
+    fileids = corpus.gutenberg.fileids()
 
+    #keylens = get_key_lens("key_bank.txt")
+    #efficiency = validate_guess(keylens, fileids, alphabet, num_candidates)
+    #print("EFFICIENCY: ", efficiency)
+
+    #plotting max key length vs efficiency
+    efficiencies = {}
+    indecipherable = {}
+    for max_key_len in range(10,60):
+        key_bank = gen_keys(max_key_len)
+        keylens = get_key_lens("key_bank.txt")
+        efficiency, p_indecipherable = validate_guess(keylens, fileids, alphabet, num_candidates)
+        efficiencies.update({max_key_len: efficiency})
+        indecipherable.update({max_key_len: p_indecipherable})
+        print("MAX KEY LENGTH: ", max_key_len, "|EFFICIENCY: ", efficiency, \
+                "|% INDECIPHERABLE: ", p_indecipherable)
+
+    lists_1 = sorted(efficiencies.items())
+    max_len_1, efficiency = zip(*lists_1)
+
+    lists_2 = sorted(indecipherable.items())
+    max_len_2, p_indecipherable = zip(*lists_2)
+    
+    plt.plot(max_len_1, efficiency)
+    plt.plot(max_len_2, p_indecipherable)
+    plt.show()
+    #percent_top5 = validate_guess(keylens, fileids, alphabet, num_candidates) 
+    #print("PERCENT CORRECT KEY LEN APPEARS IN FIVE MOST FREQUENCE FACTORS: ", percent_top5) 
+    
 if __name__ == "__main__": 
     main() 
 

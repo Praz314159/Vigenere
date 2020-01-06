@@ -38,8 +38,8 @@ def create_key_stream(key, plaintext, alphabet):
 
 #encrypting file: takes a plaintext file and returns both ciphertext string literal
 # and ciphertext file 
-def encrypt(keystream, plaintext_file_name, alphabet):
-    plaintext = open(plaintext_file_name, "rt", encoding = "utf-8").read() 
+def encrypt(keystream, plaintext, alphabet):
+    #plaintext = open(plaintext_file_name, "rt", encoding = "utf-8").read() 
     plain_text_size = len(plaintext)
     alphabet_size = len(alphabet)
 
@@ -48,11 +48,12 @@ def encrypt(keystream, plaintext_file_name, alphabet):
             plain_ord = ord(plaintext[i])
             keystream_ord = ord(keystream[i])
             ciphertext_file.write( chr( (plain_ord + keystream_ord) % alphabet_size))
-      
-    ciphertext = ciphertext_file.read() 
+    
+    ciphertext_file.close() 
+    ciphertext = open(ciphertext_file.name, "rt", encoding = "utf-8").read() 
       
     ciphertext_file.close()
-    plaintext_file.close() 
+    #plaintext_file.close() 
 
     return ciphertext, ciphertext_file  
 
@@ -268,7 +269,7 @@ def likely_key_lengths(ciphertext):
     else:      
         sorted_factor_counts = sorted(factor_counts, key = factor_counts.get, reverse = True) 
         most_likely_lengths = sorted_factor_counts[:5] 
-
+    
     return most_likely_lengths, sorted_factor_counts  
 
 
