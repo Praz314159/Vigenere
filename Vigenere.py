@@ -153,23 +153,51 @@ def plot_frequencies(text, bar_color):
 
 ######################### NLP FUNCTIONARLY ###################################
 
-def clean_text(text):
-    '''
-    TO DO: 
+#helper function to remove non letters
+def clean_text(text, alphabet):
+    letters_and_space = alphabet + alphabet.lower() + " \t\n"
 
-    1. Everything to upper or lower case 
-    2. Get rid of punctuation 
-    3. Get rid of spaces 
+    only_letters = []
+    for char in text:
+        if char in letters_and_space:
+            only_letters.append(char)
 
-    '''
-    pass 
+    clean_text = "".join(only_letters) 
+    return clean_text
 
-def is_english(text): 
-    #Should check if a text is likely to be english or not 
-    #perhaps return a probability? 
-    #It would be super useful if there was some sort of NLP ML 
-    #that could recognize whether a certain text was the same 
-    #language as that of a corpus of text. 
+
+def load_dictionary(dictionary_name):
+    dictionary = open(dictionary_name, "rt", encoding = "utf-8")
+    english_words = {}
+
+    for word in dictionary.read().split("\n"):
+        english_words[word] = None
+
+    dictionary.close()
+    return english_words 
+
+def english_count(text, alphabet, dictionary_name):
+    english_words = load_dictionary(dictionary_name)
+    text = text.upper()
+    text = clean_text(text, alphabet) 
+    candidate_words = text.split() 
+    
+    num_matches = 0
+    matches = []
+    if len(candidate_words) != 0: 
+        for word in candidate_words:
+            num_matches += 1
+            matches.append(word) 
+    else:
+        num_matches = -1 
+
+    match_frequency = float(num_matches)/len(candidate_words)
+    return match_frequency
+
+
+def is_english(text, word_percentage, letter_percentage): 
+        
+
     pass 
 
 

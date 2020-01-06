@@ -14,13 +14,13 @@ import matplotlib.pylab as plt
 
 #We want to generate various keys of length 2-30 
 #each key length, we generate 5 random keys
-def gen_keys(max_key_len):
+def gen_keys(min_key_len, max_key_len):
     start = 0 
     stop = 255
     with open("key_bank.txt", "w+", encoding = "utf-8") as key_bank: 
-        for keylen in range(2,max_key_len): 
+        for keylen in range(min_key_len,max_key_len): 
             #generate random key from ASCII characters --> range 0-255  
-            for keynum in range(5):
+            for keynum in range(2):
                 key = "" 
                 ASCII_ords = [random.randint(start, stop) for ch_ord in range(keylen)]
 
@@ -78,8 +78,8 @@ def validate_guess(keylens, fileids, alphabet, num_candidates):
                     #print("Included: ", True, "|Key length: ", keylens.get(key), "|Choices: ", most_likely_lengths)
                     found += 1
                 else: 
-                    #print("Included: ", False, "|Key length: ", keylens.get(key), "|Choices: ",\
-                    #        most_likely_lengths, "|Next: ", sorted_factor_counts[:num_candidates+1])
+                    print("Included: ", False, "|Key length: ", keylens.get(key), "|Choices: ",\
+                           most_likely_lengths, "|Next: ", sorted_factor_counts[:num_candidates+1])
                     not_found += 1 
 
     percent_top5 = (found)/(found + not_found)
@@ -96,9 +96,11 @@ def main():
     
     #max_key_len = int(sys.argv[1])
     num_candidates = int(sys.argv[1])
+    min_key_len = int(sys.argv[2])
+    max_key_len = int(sys.argv[3])
 
     #generating random key bank 
-    key_bank = gen_keys(42) 
+    #key_bank = gen_keys(42) 
     
     #getting list of fileids 
     fileids = corpus.gutenberg.fileids()
@@ -110,23 +112,26 @@ def main():
     #plotting max key length vs efficiency
     efficiencies = {}
     indecipherable = {}
-    for max_key_len in range(10,60):
-        key_bank = gen_keys(max_key_len)
+    for min_len in range(min_key_len, max_key_len-5):
+        key_bank = gen_keys(min_len, max_key_len)
         keylens = get_key_lens("key_bank.txt")
         efficiency, p_indecipherable = validate_guess(keylens, fileids, alphabet, num_candidates)
-        efficiencies.update({max_key_len: efficiency})
-        indecipherable.update({max_key_len: p_indecipherable})
-        print("MAX KEY LENGTH: ", max_key_len, "|EFFICIENCY: ", efficiency, \
+        efficiencies.update({min_len: efficiency})
+        indecipherable.update({min_len: p_indecipherable})
+        print("MIN KEY LENGTH: ", min_len, "|EFFICIENCY: ", efficiency, \
                 "|% INDECIPHERABLE: ", p_indecipherable)
 
     lists_1 = sorted(efficiencies.items())
-    max_len_1, efficiency = zip(*lists_1)
+    min_len_1, efficiency = zip(*lists_1)
 
     lists_2 = sorted(indecipherable.items())
-    max_len_2, p_indecipherable = zip(*lists_2)
+    min_len_2, p_indecipherable = zip(*lists_2)
     
-    plt.plot(max_len_1, efficiency)
-    plt.plot(max_len_2, p_indecipherable)
+    plt.plot(min_len_1, efficiency)
+    plt.plot(min_len_2, p_indecipherable)
+    plt.title("Moving Min Key Length with Fixed Max_Key_Length and Num_Candidates")
+    plt.xlabel("Min Key Length") 
+    plt.ylabel("% Efficiency, % Indecipherable") 
     plt.show()
     #percent_top5 = validate_guess(keylens, fileids, alphabet, num_candidates) 
     #print("PERCENT CORRECT KEY LEN APPEARS IN FIVE MOST FREQUENCE FACTORS: ", percent_top5) 
