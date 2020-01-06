@@ -192,13 +192,22 @@ def english_count(text, alphabet, dictionary_name):
         num_matches = -1 
 
     match_frequency = float(num_matches)/len(candidate_words)
-    return match_frequency
+    return match_frequency, matches
 
 
-def is_english(text, word_percentage, letter_percentage): 
-        
+def is_english(text, alphabet, dictionary_name, word_percentage, letter_percentage): 
+    match_frequency, matches = english_count(text, alphabet, dictionary_name)
+    word_match_percentage = match_freqency*100 
+    
+    #get letter percentage 
+    num_letters = len(clean_text(text, alphabet)) 
+    letter_match_percentage = (float(num_letters/len(text))*100 
+    matched = False
+            if match_percentage >= word_match_percentage \
+               and letter_match_percentage >= letter_percentage:
+               matched = True 
+    return matched 
 
-    pass 
 
 
 ######################### KASISKI EXAMINATION ################################
