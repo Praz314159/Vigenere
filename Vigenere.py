@@ -1,5 +1,6 @@
-# This is a vigenere encryption tool. The purpose of this code is to take as input some text, encrypt it, then return the ecrypted message. 
-# Recall how the vigenere cipher works. It is a polyalphabetic cipher that does the following: 
+# This is a vigenere encryption tool. The purpose of this code is to take as input some text, 
+# encrypt it, then return the ecrypted message. Recall how the vigenere cipher works. 
+# It is a polyalphabetic cipher that does the following: 
 #   1) We choose a key
 #   2) We repeat the key until it is the same length as the plaintext (this is known as the keystream  
 #   3) We then proceed character by character encrypting with e_i = (p_i + k_i) mod (26)
@@ -11,7 +12,7 @@ import os.path
 import matplotlib.pylab as plt
 import itertools, re
 import io
-
+import codecs
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
 # creating keystream from key 
@@ -38,8 +39,9 @@ def create_key_stream(key, plaintext, alphabet):
 
 #encrypting file: takes a plaintext file and returns both ciphertext string literal
 # and ciphertext file 
-def encrypt(keystream, plaintext, alphabet):
-    #plaintext = open(plaintext_file_name, "rt", encoding = "utf-8").read() 
+def encrypt(keystream, plaintext_file_name, alphabet):
+    plaintext_file = open(plaintext_file_name, "rt", encoding = "utf-8")
+    plaintext = plaintext_file.read()
     plain_text_size = len(plaintext)
     alphabet_size = len(alphabet)
 
@@ -53,7 +55,7 @@ def encrypt(keystream, plaintext, alphabet):
     ciphertext = open(ciphertext_file.name, "rt", encoding = "utf-8").read() 
       
     ciphertext_file.close()
-    #plaintext_file.close() 
+    plaintext_file.close() 
 
     return ciphertext, ciphertext_file  
 
@@ -61,7 +63,8 @@ def encrypt(keystream, plaintext, alphabet):
 #decrypting file: takes a ciphertext file and returns the recovered text as both a string literal
 #and as a file 
 def decrypt(keystream, ciphertext_file_name, alphabet): 
-    ciphertext = open(ciphertext_file_name, "rt", encoding="utf8").read()
+    ciphertext_file = open(ciphertext_file_name, "rt", encoding="utf8")
+    ciphertext = ciphertext_file.read()
     cipher_text_size = len(ciphertext) 
     alphabet_size = len(alphabet)
 
@@ -115,21 +118,22 @@ def frequency_analysis(text, alphabet):
 #in the text
 def frequency_order(text, alphabet):
     char_counts = frequency_analysis(text, alphabet)
-    sorted_char_freq = sorted(char_counts, key = char_counts.get, reverse = True)
+    text_freq_order = sorted(char_counts, key = char_counts.get, reverse = True)
+    return text_freq_order
 
 
 def frequency_match_score(text, alphabet, alphabet_by_frequency):
     #alphabet_by_frequency is a sorted list of the alphabet by general frequency in language
     text_freq_order = frequency_order(text, alphabet)  
     match_score = 0 
-    for common_char in alphabet_by_frequency[:6]:
-        if common_char in text_freq_order[-6:]: 
+    for common_char in alphabet_by_frequency[:5]:
+        if common_char in text_freq_order[:5]: 
             match_score += 1
         else: 
             pass 
 
-    for uncommon_char in alphabet_by_frequency[-6:]:
-        if uncommon_char in text_freq_order[:6]:
+    for uncommon_char in alphabet_by_frequency[-5:]:
+        if uncommon_char in text_freq_order[-5:]:
             match_score += 1
         else: 
             pass 
@@ -156,22 +160,24 @@ def plot_frequencies(text, bar_color):
 #helper function to remove non letters
 def clean_text(text, alphabet):
     letters_and_space = alphabet + alphabet.lower() + " \t\n"
-
+    print(letters_and_space)
+    print(text)
     only_letters = []
     for char in text:
         if char in letters_and_space:
             only_letters.append(char)
 
+    print(only_letters)
     clean_text = "".join(only_letters) 
     return clean_text
 
 
 def load_dictionary(dictionary_name):
-    dictionary = open(dictionary_name, "rt", encoding = "utf-8")
-    english_words = {}
+    with open(dictionary_name, "rt", encoding = "utf-8", errors = "ignore") as dictionary: 
+        english_words = {}
 
-    for word in dictionary.read().split("\n"):
-        english_words[word] = None
+        for word in dictionary.read().split("\n"):
+            english_words[word] = None
 
     dictionary.close()
     return english_words 
@@ -179,7 +185,7 @@ def load_dictionary(dictionary_name):
 def english_count(text, alphabet, dictionary_name):
     english_words = load_dictionary(dictionary_name)
     text = text.upper()
-    text = clean_text(text, alphabet) 
+    text = clean_text(text, alphabet)
     candidate_words = text.split() 
     
     num_matches = 0
@@ -197,18 +203,18 @@ def english_count(text, alphabet, dictionary_name):
 
 def is_english(text, alphabet, dictionary_name, word_percentage, letter_percentage): 
     match_frequency, matches = english_count(text, alphabet, dictionary_name)
-    word_match_percentage = match_freqency*100 
+    word_match_percentage = match_frequency*100 
     
     #get letter percentage 
     num_letters = len(clean_text(text, alphabet)) 
-    letter_match_percentage = (float(num_letters/len(text))*100 
+    letter_match_percentage = (float(num_letters/len(text)))*100 
     matched = False
-            if match_percentage >= word_match_percentage \
-               and letter_match_percentage >= letter_percentage:
-               matched = True 
+
+    if word_match_percentage >= word_percentage \
+        and letter_match_percentage >= letter_percentage:
+        matched = True 
+
     return matched 
-
-
 
 ######################### KASISKI EXAMINATION ################################
 
@@ -305,7 +311,7 @@ def likely_key_lengths(ciphertext):
         factor_counts = -1
     else:      
         sorted_factor_counts = sorted(factor_counts, key = factor_counts.get, reverse = True) 
-        most_likely_lengths = sorted_factor_counts[:5] 
+        most_likely_lengths = sorted_factor_counts[:7] 
     
     return most_likely_lengths, sorted_factor_counts  
 
@@ -328,7 +334,7 @@ def cipher_cuts(ciphertext, likely_key_length):
 
 #Produces a list of all possible keys given a likely key length and 
 #how the characters that likely occupy each position in the key
-def get_key_combos(candidate_key_chars, likely_key_len):
+def get_key_combos(candidate_key_chars, likely_len):
     candidate_keys = []
 
     #I have no idea how this iteration works .... return to 
@@ -342,18 +348,23 @@ def get_key_combos(candidate_key_chars, likely_key_len):
 
 
 #function should return the most likely key 
-def kasiski_exam_hack(ciphertext_file, alphabet, alphabet_by_frequency):
+def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
     
-    ciphertext = open(ciphertext_file.name, "rt", encoding = "utf-8").read() 
+    ciphertext = open(ciphertext_file_name, "rt", encoding = "utf-8").read() 
     likely_lens, sorted_factor_counts = likely_key_lengths(ciphertext) 
+    
+    if type(likely_lens) == int:
+        print("No repeated sequences found in ciphertext. Cannot decrypt.")
+        return
 
     alphabet_size = len(alphabet)
     best_key_guess = ""
-    for likely_len in likely_key_lens:
-        cipher_cuts = cipher_cuts(ciphertext, likely_len)
+
+    for likely_len in likely_lens:
+        cuts = cipher_cuts(ciphertext, likely_len)
         candidate_key_chars = []
-        for i in range(len(cipher_cuts)):
-            cut = cipher_cuts[i]
+        for i in range(len(cuts)):
+            cut = cuts[i]
             cut_match_score_dict = {}
 
             for char in alphabet:
@@ -369,7 +380,7 @@ def kasiski_exam_hack(ciphertext_file, alphabet, alphabet_by_frequency):
             #getting max scores 
             sorted_match_scores = sorted(cut_match_score_dict, key = cut_match_score_dict.get,\
                     reverse = True)
-            candidates = sorted_match_scores[:4]
+            candidates = sorted_match_scores[:5]
             #instead of dictionary, create list of lists that is length likely_len
             candidate_key_chars.append(candidates)
 
@@ -378,46 +389,48 @@ def kasiski_exam_hack(ciphertext_file, alphabet, alphabet_by_frequency):
         possible_keys = get_key_combos(candidate_key_chars, likely_len)
 
         #brute forcing through possible keys to see if any of them are plausible
-        #only one should actually produce coherent text in english 
+        #only one should actually produce coherent text in english
+        print(possible_keys)
         for key in possible_keys: 
-            keystream = create_key_stream(key, text)
-            trial_recovery_file = decrypt(ciphertext, keystream, alphabet) 
-            trial_recovery_text = open(trial_recovery_file.name, "rt", encoding = "utf-8").read()
+            keystream = create_key_stream(key, ciphertext, alphabet)
+            trial_recovery_text, trial_recovery_file = decrypt(keystream, ciphertext_file_name, alphabet) 
+            print("RECOVERED: ", trial_recovery_text)
+            #trial_recovery_text = open(trial_recovery_file.name, "rt", encoding = "utf-8").read()
             
             #TO DO: write is_english method 
-            if is_english(trial_recovery_text) == True: 
+            if is_english(trial_recovery_text, alphabet, "engmix.txt", 20, 85): 
                 best_key_guess = key 
             else:
                 pass
 
     if best_key_guess == "":
         print("Reasonable key guess not found. \
-               Consider using manual hack mode to break the cipher.") 
+               Consider using manual hack mode to break the cipher.")
+        return
     
     return best_key_guess 
 
 def main():
-    #creating alphabet default is using ASCII alphabet. 
+    #creating alphabet default is using ASCII alphabet.
+    '''
     char_array = []
     for i in range(255):
         char_array.append(chr(i))
-    
-    alphabet = char_array 
+    '''
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     alphabet_by_freq = list("ETAOINSHRDLCUMWFGYPBVKJXQZ")
     
     plaintext_file_name = sys.argv[1]   
     plaintext = open(plaintext_file_name, "rt").read()
-    key = sys.argv[2]  
+    key = sys.argv[2]
 
-    keystream = create_key_stream(key, plaintext) 
-    ciphertext_file = encrypt(keystream, plaintext, alphabet)
-    recovered_plaintext_file = decrypt(keystream, ciphertext_file, alphabet)
-    ciphertext = open(ciphertext_file.name, "rt", encoding = "utf8").read() 
-    recovered_plaintext = open(recovered_plaintext_file.name, "rt", encoding = "utf8").read() 
+    keystream = create_key_stream(key, plaintext, alphabet) 
+    ciphertext, ciphertext_file = encrypt(keystream, plaintext_file_name, alphabet)
+    recovered_text, recovered_text_file, = decrypt(keystream, ciphertext_file.name, alphabet) 
   
     ################## CRYPTANALYSIS ###################
-    #do some text cleaning first 
-    best_key_guess = kasiski_exam_hack(ciphertext_file.name, alphabet, alphabet_by_frequency) 
+    
+    best_key_guess = kasiski_exam_hack(ciphertext_file.name, alphabet, alphabet_by_freq) 
     
     if best_key_guess == key: 
         print("You are a motherfucking beast")
