@@ -12,7 +12,6 @@ import os.path
 import matplotlib.pylab as plt
 import itertools, re
 import io
-import codecs
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
 # creating keystream from key 
@@ -42,18 +41,11 @@ def create_key_stream(key, plaintext, alphabet):
 def encrypt(keystream, plaintext_file_name, alphabet):
     plaintext_file = open(plaintext_file_name, "rt", encoding = "utf-8")
     plaintext = plaintext_file.read()
-    #print("PLAINTEXT FROM ENCRYPT: ", plaintext) 
     plain_text_size = len(plaintext)
-    #print("PLAINTEXT LENGTH FROM ENCRYPT: ", plain_text_size) 
     alphabet_size = len(alphabet)
-    #print("ALPHABET LENGTH FROM ENCRYPT: ", alphabet_size) 
-
+    
     with open("ciphertext.txt", "w+", encoding = "utf-8") as ciphertext_file: 
         for i in range(plain_text_size):
-            #plain_ord = ord(plaintext[i])
-            #keystream_ord = ord(keystream[i])
-            #ciphertext_file.write( chr( (plain_ord + keystream_ord) % alphabet_size))
-            #print((ord(plaintext[i]) + ord(keystream[i]))%alphabet_size)
             ciphertext_file.write(chr((ord(plaintext[i]) + ord(keystream[i])) % 255))
        
         ciphertext = ciphertext_file.read() 
@@ -121,9 +113,7 @@ def frequency_order(text, alphabet):
 
 def frequency_match_score(text, alphabet, alphabet_by_frequency):
     #alphabet_by_frequency is a sorted list of the alphabet by general frequency in language
-    #print("TEXT FREQ ORDER: ", text_freq_order)
     text_freq_order = frequency_order(text, alphabet)
-    #print("TEXT FREQ ORDER: ", text_freq_order)
     lower_by_freq = alphabet_by_frequency.lower()
     match_score = 0 
     for common_char in text_freq_order[:5]:
@@ -158,14 +148,12 @@ def plot_frequencies(text, bar_color):
 #helper function to remove non letters
 def clean_text(text, alphabet):
     letters_and_space = alphabet + alphabet.lower() + " \t\n"
-    #print(letters_and_space)
-    #print(text)
+
     only_letters = []
     for char in text:
         if char in letters_and_space:
             only_letters.append(char)
 
-    #print(only_letters)
     clean_text = "".join(only_letters) 
     return clean_text
 
@@ -236,18 +224,14 @@ def find_matches(text):
     text = list(text)
     
     for i in range(len(text)): 
-        #print("i: ", text[i])
         for j in range(i+1, len(text)):
-            #print("j: ", text[j])
-            if text[i] == text[j]:
-                #print("Match at char: ", text[j]) 
+            if text[i] == text[j]: 
                 match_count = 0
                 match = ''
                 while i + match_count < len(text) and j + match_count < len(text):
                     if text[i + match_count] == text[j+match_count]: 
                         match += text[j+match_count] 
-                        match_count += 1 
-                        #print("Match: ", match) 
+                        match_count += 1  
                     else: 
                         break 
 
@@ -358,20 +342,20 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
 
     alphabet_size = len(alphabet)
     best_key_guess = ""
-    print("CANDIDATE KEY LENGTHS: ", likely_lens) 
+    #print("CANDIDATE KEY LENGTHS: ", likely_lens) 
     for likely_len in likely_lens:
-        print("LIKELY KEY LENGTH: ", likely_len) 
+        #print("LIKELY KEY LENGTH: ", likely_len) 
         cuts = cipher_cuts(ciphertext, likely_len)
         candidate_key_chars = []
         for i in range(len(cuts)):
             cut = cuts[i]
             cut_match_score_dict = {}
-            print("ORIGINAL CUT: ", cut, "\n")
+            #print("ORIGINAL CUT: ", cut, "\n")
             for char in alphabet:
                 decrypted_cut = ""
                 for j in range(len(cut)):
                     decrypted_cut += chr((ord(cut[j]) - ord(char)) % 255)
-                print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut)
+                #print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut)
                 match_score = frequency_match_score(decrypted_cut, alphabet, alphabet_by_frequency)
                 cut_match_score_dict.update({char: match_score})
             
@@ -382,29 +366,26 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
             #getting max scores 
             sorted_match_scores = sorted(cut_match_score_dict, key = cut_match_score_dict.get,\
                     reverse = True)
-            print("SORTED MATCH SCORES: ", sorted_match_scores)
+            #print("SORTED MATCH SCORES: ", sorted_match_scores)
             candidates = sorted_match_scores[:5]
             #instead of dictionary, create list of lists that is length likely_len
             candidate_key_chars.append(candidates)
 
         #getting all possible keys given best guesses about which chars comprise the key of a 
         #given length
-        print("CANDIDATE KEY CHARS: ", candidate_key_chars)
+        #print("CANDIDATE KEY CHARS: ", candidate_key_chars)
         possible_keys = get_key_combos(candidate_key_chars, likely_len)
 
         #brute forcing through possible keys to see if any of them are plausible
         #only one should actually produce coherent text in english
         #print("LIKELY KEY LENGTH: ", likely_len)
-        print("NUM POSSIBLE KEYS: ", len(possible_keys))
-        print("POSSIBLE KEYS: ", possible_keys)
+        #print("NUM POSSIBLE KEYS: ", len(possible_keys))
+        #print("POSSIBLE KEYS: ", possible_keys)
         for key in possible_keys:
             #print("CIPHERTEXT: ", ciphertext) 
             keystream = create_key_stream(key, ciphertext, alphabet)
             trial_recovery_text, trial_recovery_file = decrypt(keystream, ciphertext_file_name, alphabet) 
             #print("RECOVERED: ", trial_recovery_text)
-            #trial_recovery_text = open(trial_recovery_file.name, "rt", encoding = "utf-8").read()
-            
-            #TO DO: write is_english method 
             if is_english(trial_recovery_text, alphabet, "engmix.txt", 50, 90):
                 print("FOUND ENGLISH RECOVERED TEXT!")
                 best_key_guess = key 
@@ -438,14 +419,6 @@ def main():
     ciphertext, ciphertext_file = encrypt(keystream, plaintext_file_name, alphabet)
     recovered_text, recovered_text_file, = decrypt(keystream, ciphertext_file.name, alphabet) 
     
-    #print("KEY LENGTH: ", len(key)) 
-    #print("KEYSTREAM LENGTH: ", len(keystream))
-    #print("PLAINTEXT LENGTH: ", len(plaintext)) 
-    #print("CIPHERTEXT LENGTH: ", len(ciphertext)) 
-
-    #print("PLAINTEXT: ", plaintext)
-    #print("CIPHERTEXT: ", ciphertext) 
-    #print("REVOVERED: ", recovered_text)
     ################## CRYPTANALYSIS ###################
     
     best_key_guess = kasiski_exam_hack(ciphertext_file.name, alphabet, alphabet_by_freq) 
@@ -481,28 +454,10 @@ Let's do a review of what we have at the moment First, we have a bunch of method
     14: kasiski_exam()
     15. main() 
 
-Currently, our main challenge is that it's difficult to guess the correct key_length.
-This isn't so bad, though. We can check what percentage of the time the correct key is within
-the five most common factors and so on. This will determine how we decide to choose likely 
-key lengths. Once we know how many candidate key lengths to return, we turn our attention
-to the problem of selecting the correct key length from amongst the candidates. This can be
-done by running attempted decryptions and checking which key length makes the most sense. 
-However, running decryptions using various key length candidates will defacto return the key. 
-That is, both the correct keylength and key will be discovered simultaneously. The next question
-is what the decryption process looks like using candidate keylengths. Clearly, the first step
-is to split the ciphertext into text segments that represent "residue classes" mod candidate 
-key length. Then we decreypt each ciphersegment with each of the 255 possible ASCII characters.
-The one that produces, for each cipher segment, a character frequency profile that most closely 
-resembles the character frequency profile of the English language will be the ASCII char
-most likely to occupy the place in the key representing the "residue class" that is that
-cipher segment. Once we have the most likely characters for each position in the key, 
-we brute force decrypt until we find a non-gibberish recovered text. 
-
 -- modify text so that any alphabet can be used -- let's stick to english??? 
 -- use argparser to run cryptanalysis with preset alphabets (cyrillic, english, french, etc.) 
 -- use argparser to create cmd vigenere encryption tool 
 -- Perhaps move this to a object-oriented architecture 
--- include text cleaning ability -- use nltk? lowercase, get rid of punctuation and spaces, etc.  
 '''
 
 
