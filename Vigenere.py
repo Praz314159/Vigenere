@@ -76,9 +76,13 @@ def decrypt(keystream, ciphertext_file_name, alphabet):
 
 ######################### FREQUENCY ANALYSIS #################################
 
-def frequency_analysis(text, alphabet): 
-    characters = list(alphabet)
-    alphabet_size = len(alphabet)
+def frequency_analysis(text):
+    
+    characters = []
+    for i in range(255):
+        characters.append(chr(i))
+        
+    alphabet_size = len(characters)
 
     #builds character array from the text 
     text_array = list(text) 
@@ -104,30 +108,55 @@ def frequency_analysis(text, alphabet):
 
 #helper function that returns the alphabet sorted by character
 #in the text
-def frequency_order(text, alphabet):
-    char_counts = frequency_analysis(text, alphabet)
+def frequency_order(text):
+    char_counts = frequency_analysis(text)
     #print("CHAR COUNTS: ", char_counts)
     text_freq_order = sorted(char_counts, key = char_counts.get, reverse = True)
     return text_freq_order
 
 
-def frequency_match_score(text, alphabet, alphabet_by_frequency):
+def frequency_match_score(text, alphabet_by_frequency):
     #alphabet_by_frequency is a sorted list of the alphabet by general frequency in language
-    text_freq_order = frequency_order(text, alphabet)
+    text_freq_order = frequency_order(text)
     lower_by_freq = alphabet_by_frequency.lower()
-    match_score = 0 
+    match_score = 0
+    '''
+    for i in range(5): 
+        for j in range(5):
+            if text_freq_order[i] == alphabet_by_frequency[j]:
+                print("TEXT: ", text_freq_order[i], "|ALPH: ", alphabet_by_frequency[j])
+                match_score += 1
+            elif text_freq_order[i] == lower_by_freq[j]:
+                print("TEXT: ", text_freq_order[i], "|ALPH: ", lower_by_freq[j])
+                match_score += 1
+            
+    for i in range(5):
+        for j in range(5):
+            if text_freq_order[-i] == alphabet_by_frequency[-j]:
+                print("TEXT: ", text_freq_order[-i], "|ALPH: ", alphabet_by_frequency[-j])
+                match_score += 1
+            elif text_freq_order[-i] == lower_by_freq[-j]:
+                print("TEXT: ", text_freq_order[-i], "|ALPH: ", lower_by_freq[-j])
+                match_score += 1
+
+    '''
+    #print("MOST COMMON: ", text_freq_order[:5])
+    #print("LEAST COMMON: ", text_freq_order[-5:])
     for common_char in text_freq_order[:5]:
-        if (common_char in alphabet_by_frequency[:5]) or (common_char in lower_by_freq[:5]): 
+        if (common_char in alphabet_by_frequency[:5]) or (common_char in lower_by_freq[:5]):
+            #print(common_char)
             match_score += 1
         else: 
             pass 
 
     for uncommon_char in text_freq_order[-5:]:
         if (uncommon_char in alphabet_by_frequency[-5:]) or (uncommon_char in lower_by_freq[-5:]):
+            #print(uncommon_char)
             match_score += 1
         else: 
             pass 
 
+    #print("MATCH SCORE: ", match_score)
     return match_score 
 
 
@@ -341,7 +370,7 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
         return
 
     alphabet_size = len(alphabet)
-    best_key_guess = ""
+    best_key_guesses = []
     #print("CANDIDATE KEY LENGTHS: ", likely_lens) 
     for likely_len in likely_lens:
         #print("LIKELY KEY LENGTH: ", likely_len) 
@@ -356,7 +385,7 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
                 for j in range(len(cut)):
                     decrypted_cut += chr((ord(cut[j]) - ord(char)) % 255)
                 #print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut)
-                match_score = frequency_match_score(decrypted_cut, alphabet, alphabet_by_frequency)
+                match_score = frequency_match_score(decrypted_cut, alphabet_by_frequency)
                 cut_match_score_dict.update({char: match_score})
             
             #print("CUT MATCH SCORES: ", cut_match_score_dict)
@@ -386,19 +415,24 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
             keystream = create_key_stream(key, ciphertext, alphabet)
             trial_recovery_text, trial_recovery_file = decrypt(keystream, ciphertext_file_name, alphabet) 
             #print("RECOVERED: ", trial_recovery_text)
-            if is_english(trial_recovery_text, alphabet, "engmix.txt", 50, 90):
+            if is_english(trial_recovery_text, alphabet, "engmix.txt", 80, 90):
                 print("FOUND ENGLISH RECOVERED TEXT!")
-                best_key_guess = key 
-                return best_key_guess
+                #best_key_guess = key 
+                print("KEY: ", key)
+                best_key_guesses.append(key)
             else:
                 pass
                 #print("RECOVERED TEXT NOT ENGLISH!")
 
-    if best_key_guess == "":
+        if len(best_key_guesses) != 0:
+            break
+
+    if not best_key_guesses:
         print("Reasonable key guess not found. \
                Consider using manual hack mode to break the cipher.")
 
-    return best_key_guess 
+    print(best_key_guesses)
+    return best_key_guesses 
 
 def main():
     #creating alphabet default is using ASCII alphabet.
@@ -421,13 +455,11 @@ def main():
     
     ################## CRYPTANALYSIS ###################
     
-    best_key_guess = kasiski_exam_hack(ciphertext_file.name, alphabet, alphabet_by_freq) 
-    print("KEY GUESS: ", best_key_guess)
-    best_guess_keystream = create_key_stream(best_key_guess, plaintext, alphabet)
-    guess_recovered, guess_recovered_file = decrypt(best_guess_keystream, ciphertext_file.name, alphabet)
-    print("GUESS RECOVERED: ", guess_recovered)
-    if best_key_guess == key: 
-        print("You are a motherfucking beast")
+    best_key_guesses = kasiski_exam_hack(ciphertext_file.name, alphabet, alphabet_by_freq) 
+    print("KEY GUESSES: ", best_key_guesses)
+ 
+    if key in best_key_guesses:
+        print("You are a motherfucking beast") 
     else: 
         print("You sad sack of shit") 
    
