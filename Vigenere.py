@@ -12,6 +12,7 @@ import os.path
 import matplotlib.pylab as plt
 import itertools, re
 import io
+import argparse
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
 # creating keystream from key 
@@ -142,10 +143,12 @@ def frequency_match_score(text, alphabet_by_frequency):
     '''
     #print("MOST COMMON: ", text_freq_order[:5])
     #print("LEAST COMMON: ", text_freq_order[-5:])
+    matches = []
     for common_char in text_freq_order[:5]:
         if (common_char in alphabet_by_frequency[:5]) or (common_char in lower_by_freq[:5]):
             #print(common_char)
             match_score += 1
+            matches.append(common_char)
         else: 
             pass 
 
@@ -153,11 +156,12 @@ def frequency_match_score(text, alphabet_by_frequency):
         if (uncommon_char in alphabet_by_frequency[-5:]) or (uncommon_char in lower_by_freq[-5:]):
             #print(uncommon_char)
             match_score += 1
+            matches.append(uncommon_char)
         else: 
             pass 
 
     #print("MATCH SCORE: ", match_score)
-    return match_score 
+    return match_score, matches 
 
 
 def normalize_frequency(count_dict):
@@ -385,9 +389,10 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
                 for j in range(len(cut)):
                     decrypted_cut += chr((ord(cut[j]) - ord(char)) % 255)
                 #print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut)
-                match_score = frequency_match_score(decrypted_cut, alphabet_by_frequency)
+                match_score, matches = frequency_match_score(decrypted_cut, alphabet_by_frequency)
                 cut_match_score_dict.update({char: match_score})
-            
+                print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut, "|MATCH SCORE: ", match_score, "|MATCHES: ", matches)
+
             #print("CUT MATCH SCORES: ", cut_match_score_dict)
             #now we have a dictionary of match scores for each char in the alphabet 
             #we want to get the chars with the max scores from the dictionary
@@ -395,14 +400,14 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
             #getting max scores 
             sorted_match_scores = sorted(cut_match_score_dict, key = cut_match_score_dict.get,\
                     reverse = True)
-            #print("SORTED MATCH SCORES: ", sorted_match_scores)
+            print("SORTED MATCH SCORES: ", sorted_match_scores)
             candidates = sorted_match_scores[:5]
             #instead of dictionary, create list of lists that is length likely_len
             candidate_key_chars.append(candidates)
 
         #getting all possible keys given best guesses about which chars comprise the key of a 
         #given length
-        #print("CANDIDATE KEY CHARS: ", candidate_key_chars)
+        print("CANDIDATE KEY CHARS: ", candidate_key_chars)
         possible_keys = get_key_combos(candidate_key_chars, likely_len)
 
         #brute forcing through possible keys to see if any of them are plausible
@@ -435,12 +440,20 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
     return best_key_guesses 
 
 def main():
-    #creating alphabet default is using ASCII alphabet.
+    parser = argparse.ArgumentParser() 
+    Mode = parser.add_mutually_exclusive_group()
+    
+    #We want three main modes: encrypt, decrypt, and cryptanalyze
+    Mode.add_argument("-e", "--encrypt", action = "store_true") 
+    Mode.add_argument("-d", "--decrypt", action = "store_true")
+    Mode.add_argument("-c", "--cryptanal", action = "store_true") 
+
+    
     '''
     char_array = []
     for i in range(255):
         char_array.append(chr(i))
-    '''
+    
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     alphabet = alphabet + alphabet.lower()
     alphabet_by_freq = "ETAOINSHRDLCUMWFGYPBVKJXQZ"
@@ -462,7 +475,7 @@ def main():
         print("You are a motherfucking beast") 
     else: 
         print("You sad sack of shit") 
-   
+    '''
 if __name__ == "__main__":
     main() 
 
@@ -490,6 +503,29 @@ Let's do a review of what we have at the moment First, we have a bunch of method
 -- use argparser to run cryptanalysis with preset alphabets (cyrillic, english, french, etc.) 
 -- use argparser to create cmd vigenere encryption tool 
 -- Perhaps move this to a object-oriented architecture 
+
+ARGPARSER NOTES: 
+
+-- three fundamental modes, encrypt, decrypt, and cryptanalysis 
+-- if encrypt, then we require a plaintext filename argument and a keyword argument, and the 
+   program will encrypt the file and store it as a new cipherfile that holds the ciphertext
+-- if decrypt, then we, again, require a ciphertext filename argument and a keyword argument, 
+   the program will decrypt the file and store it as a new recoveredfile that holds the 
+   recovered plaintext 
+-- if the user specifies cryptanalysis mode, then things get a little bit more interesting. 
+   We will want the user to then specify whether he wants to manually conduct the cryptanalysis
+   or whether he wants the program to automatically do it for him and spit out a list of the most
+   likely key words. If the user wants enters manual cryptanalysis mode, then he will have access 
+   to a number of funciton calls that ultimately will allow him to retrieve the key word based
+   on the output of those function calls. But, before we build out manual mode, we will start by
+   building out automatic mode. In automatic mode, the user will have to specify the filename for 
+   the dictionary of the language he things the ciphertext is written in. He will also have to 
+   specify an argument for the alphabet as well as that same alphabet sorted by letter frequency.
+   If necessary, the user can also specify the filename for a text corpus in the necessary 
+   language, and then run a frequency analysis of that corpus. 
+    
+
+
 '''
 
 
