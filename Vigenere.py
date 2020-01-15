@@ -55,7 +55,7 @@ def encrypt(key, plaintext_file_name):
       
     ciphertext_file.close()
     plaintext_file.close() 
-
+    print(ciphertext)
     return ciphertext, ciphertext_file  
 
 
@@ -469,12 +469,12 @@ def main():
             encrypted", type = str) 
     parser.add_argument("-l", "--language", required = False, help = "This is the language you believe the\
             message to be in", default = 'English', choices = ['English'], type = str) 
-    parser.add_argument("-wp", "--word_Percentage", required = False, help = "When cryptanalyzing,\
+    parser.add_argument("-wp", "--word_percentage", required = False, help = "When cryptanalyzing,\
             this is the percentage of matched words of the indicated language in the ciphertext\
             decrypted by a candidate keyword that must be reached in order for the candidate recovered\
             text to be considered of that language.",\
             default = 60, type = float)
-    parser.add_argument("-lp", "--letter_Percentage", required = False, help = "When cryptoanalyzing, this\
+    parser.add_argument("-lp", "--letter_percentage", required = False, help = "When cryptoanalyzing, this\
             is the percentage of matched letters of the indicated language in the ciphertext decrypted by\
             a candidate keyword that must be reached in order for the candidate recovered text to be\
             considered of that language.", default = 80, type = float) 
@@ -491,24 +491,28 @@ def main():
     args = parser.parse_args() 
 
     if args.encrypt:
-        plaintext_file_name = args.File
-        key = args.Key 
+        plaintext_file_name = args.file
+        key = args.key 
         ciphertext, ciphertext_file = encrypt(key, plaintext_file_name) 
-        print(plaintext_file_name, " has been encrypted:\n", ciphertext)  
+        print(plaintext_file_name, " has been encrypted:")
+        cipher_text = open(ciphertext_file.name, "rt", encoding = "utf-8").read()
+        print(cipher_text)  
     elif args.decrypt: 
-        ciphertext_file_name = args.File
-        key = args.Key
+        ciphertext_file_name = args.file
+        key = args.key
         recovered_text, recovered_text_file = decrypt(key, ciphertext_file_name) 
-        print(ciphertext_file_name, " has been decrypted: \n", recovered_text) 
+        print(ciphertext_file_name, " has been decrypted:")
+        recoveredtext = open(recovered_text_file.name, "rt", encoding = "utf-8").read()
+        print(recoveredtext)
     elif args.cryptanal: 
-        ciphertext_file_name = args.File
-        if args.Language == "English":
+        ciphertext_file_name = args.file
+        if args.language == "English":
             dictionary_name = "mixeng.txt"
             alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             alphabet = alphabet + alphabet.lower()
             alphabet_by_freq = "ETAOINSHRDLCUMWFGYPBVKJXQZ"
-        word_percentage = args.Word_Percentage
-        letter_percentage = args.Letter_Percentage
+        word_percentage = args.word_percentage
+        letter_percentage = args.letter_percentage
         best_key_guesses = kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_freq,\
                 word_percentage, letter_percentage) 
 
