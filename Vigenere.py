@@ -18,12 +18,11 @@ import argparse
 ############## CLASSIC VIGENERE ##################
 
 # creating keystream from key 
-def create_key_stream(key, plaintext, alphabet):
+def create_key_stream(key, plaintext):
 
     keystream = ""
     key_size = len(key)
     plain_text_size = len(plaintext)
-    alphabet_size = len(alphabet)
  
     if key_size > plain_text_size:
         print("You're using a One-Time Pad!") 
@@ -41,12 +40,13 @@ def create_key_stream(key, plaintext, alphabet):
 
 #encrypting file: takes a plaintext file and returns both ciphertext string literal
 # and ciphertext file 
-def encrypt(keystream, plaintext_file_name, alphabet):
+def encrypt(key, plaintext_file_name):
     plaintext_file = open(plaintext_file_name, "rt", encoding = "utf-8")
     plaintext = plaintext_file.read()
     plain_text_size = len(plaintext)
-    alphabet_size = len(alphabet)
     
+    keystream = create_key_stream(key, plaintext)
+
     with open("ciphertext.txt", "w+", encoding = "utf-8") as ciphertext_file: 
         for i in range(plain_text_size):
             ciphertext_file.write(chr((ord(plaintext[i]) + ord(keystream[i])) % 255))
@@ -61,11 +61,12 @@ def encrypt(keystream, plaintext_file_name, alphabet):
 
 #decrypting file: takes a ciphertext file and returns the recovered text as both a string literal
 #and as a file 
-def decrypt(keystream, ciphertext_file_name, alphabet): 
+def decrypt(key, ciphertext_file_name): 
     ciphertext_file = open(ciphertext_file_name, "rt", encoding="utf8")
     ciphertext = ciphertext_file.read()
     cipher_text_size = len(ciphertext) 
-    alphabet_size = len(alphabet)
+    
+    keystream = create_key_stream(key, ciphertext)
 
     with open("recovered.txt", "w+", encoding = "utf8") as recovered_text_file:
         for i in range(cipher_text_size): 
@@ -77,12 +78,10 @@ def decrypt(keystream, ciphertext_file_name, alphabet):
     recovered_text_file.close() 
     return recovered_text, recovered_text_file 
 
-############## CLASSIC VIGENERE ##################
-
-
-
-
-
+############## BEAUFORT VIGENERE ###################
+############## RUNNING KEY VIGENERE ################
+############## MULTIPLE PRIME KEY VIGENERE #########
+############## AUTOKEY VIGENERE ####################
 
 ######################### FREQUENCY ANALYSIS #################################
 
@@ -373,7 +372,7 @@ def get_key_combos(candidate_key_chars, likely_len):
 
 
 #function should return the most likely key 
-def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
+def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency, word_percentage, letter_percentage):
     
     ciphertext = open(ciphertext_file_name, "rt", encoding = "utf-8").read() 
     likely_lens, sorted_factor_counts = likely_key_lengths(ciphertext) 
@@ -426,10 +425,10 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
         #print("POSSIBLE KEYS: ", possible_keys)
         for key in possible_keys:
             #print("CIPHERTEXT: ", ciphertext) 
-            keystream = create_key_stream(key, ciphertext, alphabet)
-            trial_recovery_text, trial_recovery_file = decrypt(keystream, ciphertext_file_name, alphabet) 
+            #keystream = create_key_stream(key, ciphertext)
+            trial_recovery_text, trial_recovery_file = decrypt(key, ciphertext_file_name) 
             #print("RECOVERED: ", trial_recovery_text)
-            if is_english(trial_recovery_text, alphabet, "engmix.txt", 80, 90):
+            if is_english(trial_recovery_text, alphabet, "engmix.txt", word_percentage, letter_percentage):
                 print("FOUND ENGLISH RECOVERED TEXT!")
                 #best_key_guess = key 
                 print("KEY: ", key)
@@ -450,14 +449,71 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency):
 
 def main():
     parser = argparse.ArgumentParser() 
-    Mode = parser.add_mutually_exclusive_group()
-    
+    # we must know which mode the user wants to operate in 
+    Mode = parser.add_mutually_exclusive_group(required = True )
     #We want three main modes: encrypt, decrypt, and cryptanalyze
     Mode.add_argument("-e", "--encrypt", action = "store_true") 
     Mode.add_argument("-d", "--decrypt", action = "store_true")
     Mode.add_argument("-c", "--cryptanal", action = "store_true") 
-
     
+    # no matter which mode the user is in, a file name must be passed. 
+    # if the user is in encrypt mode the plaintext must be passed 
+    # if the user is in decrypt mode the ciphertext must be passed 
+    # if the user is in cryptanal mode the ciphertext must be passed 
+    #File_pass = parser.add_mutually_exclusive_group(required = True)
+        
+    parser.add_argument("-f", "--file", required = True, help = "The name of either the plaintext file you\
+            you want to encrypt, or the ciphertext file you want to \
+            decrypt or analyze", type = str)
+    parser.add_argument("-k","--key", required = False, help = "The key with which your plaintext file will be\
+            encrypted", type = str) 
+    parser.add_argument("-l", "--language", required = False, help = "This is the language you believe the\
+            message to be in", default = 'English', choices = ['English'], type = str) 
+    parser.add_argument("-wp", "--word_Percentage", required = False, help = "When cryptanalyzing,\
+            this is the percentage of matched words of the indicated language in the ciphertext\
+            decrypted by a candidate keyword that must be reached in order for the candidate recovered\
+            text to be considered of that language.",\
+            default = 60, type = float)
+    parser.add_argument("-lp", "--letter_Percentage", required = False, help = "When cryptoanalyzing, this\
+            is the percentage of matched letters of the indicated language in the ciphertext decrypted by\
+            a candidate keyword that must be reached in order for the candidate recovered text to be\
+            considered of that language.", default = 80, type = float) 
+
+    #if we enter cryptanalysis mode, then we want to know if the analysis should be 
+    #done automatically, or if it should be done manually.
+    #if the analysis is to be done manually. Then, not sure ... will have to figure out
+    '''
+    Analyzer = parse.add_mutually_exclusive_group() 
+    Analyzer.add_argument("-a", "--automatic", action = "store_true")
+    Analyzer.add_argument("-m", "--manual", action = "store_true") 
+    '''
+
+    args = parser.parse_args() 
+
+    if args.encrypt:
+        plaintext_file_name = args.File
+        key = args.Key 
+        ciphertext, ciphertext_file = encrypt(key, plaintext_file_name) 
+        print(plaintext_file_name, " has been encrypted:\n", ciphertext)  
+    elif args.decrypt: 
+        ciphertext_file_name = args.File
+        key = args.Key
+        recovered_text, recovered_text_file = decrypt(key, ciphertext_file_name) 
+        print(ciphertext_file_name, " has been decrypted: \n", recovered_text) 
+    elif args.cryptanal: 
+        ciphertext_file_name = args.File
+        if args.Language == "English":
+            dictionary_name = "mixeng.txt"
+            alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            alphabet = alphabet + alphabet.lower()
+            alphabet_by_freq = "ETAOINSHRDLCUMWFGYPBVKJXQZ"
+        word_percentage = args.Word_Percentage
+        letter_percentage = args.Letter_Percentage
+        best_key_guesses = kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_freq,\
+                word_percentage, letter_percentage) 
+
+        print("Key Guesses: ", best_key_guesses) 
+
     '''
     char_array = []
     for i in range(255):
@@ -471,9 +527,9 @@ def main():
     plaintext = open(plaintext_file_name, "rt").read()
     key = sys.argv[2]
 
-    keystream = create_key_stream(key, plaintext, alphabet) 
-    ciphertext, ciphertext_file = encrypt(keystream, plaintext_file_name, alphabet)
-    recovered_text, recovered_text_file, = decrypt(keystream, ciphertext_file.name, alphabet) 
+    #keystream = create_key_stream(key, plaintext) 
+    ciphertext, ciphertext_file = encrypt(key, plaintext_file_name)
+    recovered_text, recovered_text_file, = decrypt(keystream, ciphertext_file.name) 
     
     ################## CRYPTANALYSIS ###################
     
