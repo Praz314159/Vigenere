@@ -15,6 +15,8 @@ import io
 import argparse
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
+############## CLASSIC VIGENERE ##################
+
 # creating keystream from key 
 def create_key_stream(key, plaintext, alphabet):
 
@@ -74,6 +76,13 @@ def decrypt(keystream, ciphertext_file_name, alphabet):
     ciphertext_file.close()
     recovered_text_file.close() 
     return recovered_text, recovered_text_file 
+
+############## CLASSIC VIGENERE ##################
+
+
+
+
+
 
 ######################### FREQUENCY ANALYSIS #################################
 
