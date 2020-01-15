@@ -399,7 +399,7 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency, wor
                 #print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut)
                 match_score, matches = frequency_match_score(decrypted_cut, alphabet_by_frequency)
                 cut_match_score_dict.update({char: match_score})
-                print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut, "|MATCH SCORE: ", match_score, "|MATCHES: ", matches)
+                #print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut, "|MATCH SCORE: ", match_score, "|MATCHES: ", matches)
 
             #print("CUT MATCH SCORES: ", cut_match_score_dict)
             #now we have a dictionary of match scores for each char in the alphabet 
@@ -408,14 +408,14 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency, wor
             #getting max scores 
             sorted_match_scores = sorted(cut_match_score_dict, key = cut_match_score_dict.get,\
                     reverse = True)
-            print("SORTED MATCH SCORES: ", sorted_match_scores)
+            #print("SORTED MATCH SCORES: ", sorted_match_scores)
             candidates = sorted_match_scores[:5]
             #instead of dictionary, create list of lists that is length likely_len
             candidate_key_chars.append(candidates)
 
         #getting all possible keys given best guesses about which chars comprise the key of a 
         #given length
-        print("CANDIDATE KEY CHARS: ", candidate_key_chars)
+        #print("CANDIDATE KEY CHARS: ", candidate_key_chars)
         possible_keys = get_key_combos(candidate_key_chars, likely_len)
 
         #brute forcing through possible keys to see if any of them are plausible
@@ -429,9 +429,9 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency, wor
             trial_recovery_text, trial_recovery_file = decrypt(key, ciphertext_file_name) 
             #print("RECOVERED: ", trial_recovery_text)
             if is_english(trial_recovery_text, alphabet, "engmix.txt", word_percentage, letter_percentage):
-                print("FOUND ENGLISH RECOVERED TEXT!")
+                #print("FOUND ENGLISH RECOVERED TEXT!")
                 #best_key_guess = key 
-                print("KEY: ", key)
+                #print("KEY: ", key)
                 best_key_guesses.append(key)
             else:
                 pass
@@ -444,7 +444,7 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency, wor
         print("Reasonable key guess not found. \
                Consider using manual hack mode to break the cipher.")
 
-    print(best_key_guesses)
+    #print(best_key_guesses)
     return best_key_guesses 
 
 def main():
@@ -482,12 +482,6 @@ def main():
     #if we enter cryptanalysis mode, then we want to know if the analysis should be 
     #done automatically, or if it should be done manually.
     #if the analysis is to be done manually. Then, not sure ... will have to figure out
-    '''
-    Analyzer = parse.add_mutually_exclusive_group() 
-    Analyzer.add_argument("-a", "--automatic", action = "store_true")
-    Analyzer.add_argument("-m", "--manual", action = "store_true") 
-    '''
-
     args = parser.parse_args() 
 
     if args.encrypt:
@@ -518,33 +512,7 @@ def main():
 
         print("Key Guesses: ", best_key_guesses) 
 
-    '''
-    char_array = []
-    for i in range(255):
-        char_array.append(chr(i))
-    
-    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    alphabet = alphabet + alphabet.lower()
-    alphabet_by_freq = "ETAOINSHRDLCUMWFGYPBVKJXQZ"
-    
-    plaintext_file_name = sys.argv[1]   
-    plaintext = open(plaintext_file_name, "rt").read()
-    key = sys.argv[2]
 
-    #keystream = create_key_stream(key, plaintext) 
-    ciphertext, ciphertext_file = encrypt(key, plaintext_file_name)
-    recovered_text, recovered_text_file, = decrypt(keystream, ciphertext_file.name) 
-    
-    ################## CRYPTANALYSIS ###################
-    
-    best_key_guesses = kasiski_exam_hack(ciphertext_file.name, alphabet, alphabet_by_freq) 
-    print("KEY GUESSES: ", best_key_guesses)
- 
-    if key in best_key_guesses:
-        print("You are a motherfucking beast") 
-    else: 
-        print("You sad sack of shit") 
-    '''
 if __name__ == "__main__":
     main() 
 
@@ -592,9 +560,6 @@ ARGPARSER NOTES:
    specify an argument for the alphabet as well as that same alphabet sorted by letter frequency.
    If necessary, the user can also specify the filename for a text corpus in the necessary 
    language, and then run a frequency analysis of that corpus. 
-    
-
-
 '''
 
 
