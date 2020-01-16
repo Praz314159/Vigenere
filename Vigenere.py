@@ -485,7 +485,7 @@ def main():
         print(cipher_text)  
     elif args.decrypt: 
         ciphertext_file_name = args.decrypt[0]
-        key = args.decrypte[1]
+        key = args.decrypt[1]
         recovered_text, recovered_text_file = decrypt(key, ciphertext_file_name) 
         print(ciphertext_file_name, " has been decrypted:")
         recoveredtext = open(recovered_text_file.name, "rt", encoding = "utf-8").read()
