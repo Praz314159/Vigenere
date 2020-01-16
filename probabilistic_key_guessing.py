@@ -58,10 +58,8 @@ def validate_guess(keylens, fileids, alphabet, num_candidates):
         plaintext = corpus.gutenberg.raw(fileid)
         plaintext = plaintext[0:300]
  
-        for key in keys: 
-            keystream = vg.create_key_stream(key, plaintext, alphabet) 
-            ciphertext, ciphertext_file = vg.encrypt(keystream, plaintext, alphabet) 
-            #ciphertext = ciphertext[0:300] 
+        for key in keys:  
+            ciphertext, ciphertext_file = vg.encrypt(key, plaintext) 
 
             #getting most likely key lengths
             cipher_match_indices, cipher_matches = vg.find_matches(ciphertext) 

@@ -108,9 +108,6 @@ def frequency_analysis(text):
                 new_count = char_count_dict.get(alph_char) + 1
                 char_count_dict.update({alph_char: new_count}) 
     
-    #print("CHARACTERS: ", characters) 
-    #print("TEXT: ", text) 
-    #print(char_count_dict)
     return char_count_dict 
 
 
@@ -118,7 +115,6 @@ def frequency_analysis(text):
 #in the text
 def frequency_order(text):
     char_counts = frequency_analysis(text)
-    #print("CHAR COUNTS: ", char_counts)
     text_freq_order = sorted(char_counts, key = char_counts.get, reverse = True)
     return text_freq_order
 
@@ -128,32 +124,10 @@ def frequency_match_score(text, alphabet_by_frequency):
     text_freq_order = frequency_order(text)
     lower_by_freq = alphabet_by_frequency.lower()
     match_score = 0
-    '''
-    for i in range(5): 
-        for j in range(5):
-            if text_freq_order[i] == alphabet_by_frequency[j]:
-                print("TEXT: ", text_freq_order[i], "|ALPH: ", alphabet_by_frequency[j])
-                match_score += 1
-            elif text_freq_order[i] == lower_by_freq[j]:
-                print("TEXT: ", text_freq_order[i], "|ALPH: ", lower_by_freq[j])
-                match_score += 1
-            
-    for i in range(5):
-        for j in range(5):
-            if text_freq_order[-i] == alphabet_by_frequency[-j]:
-                print("TEXT: ", text_freq_order[-i], "|ALPH: ", alphabet_by_frequency[-j])
-                match_score += 1
-            elif text_freq_order[-i] == lower_by_freq[-j]:
-                print("TEXT: ", text_freq_order[-i], "|ALPH: ", lower_by_freq[-j])
-                match_score += 1
-
-    '''
-    #print("MOST COMMON: ", text_freq_order[:5])
-    #print("LEAST COMMON: ", text_freq_order[-5:])
+   
     matches = []
     for common_char in text_freq_order[:5]:
         if (common_char in alphabet_by_frequency[:5]) or (common_char in lower_by_freq[:5]):
-            #print(common_char)
             match_score += 1
             matches.append(common_char)
         else: 
@@ -161,13 +135,11 @@ def frequency_match_score(text, alphabet_by_frequency):
 
     for uncommon_char in text_freq_order[-5:]:
         if (uncommon_char in alphabet_by_frequency[-5:]) or (uncommon_char in lower_by_freq[-5:]):
-            #print(uncommon_char)
             match_score += 1
             matches.append(uncommon_char)
         else: 
             pass 
 
-    #print("MATCH SCORE: ", match_score)
     return match_score, matches 
 
 
@@ -307,12 +279,10 @@ def likely_key_lengths(ciphertext):
         if (i % 2) == 0:
             match_distance = match_indices[i+1] - match_indices[i]
             match_dists.append(match_distance) 
-
-    #print("Distances: ", match_dists) 
+ 
     factor_counts = {} 
     for i in range(len(match_dists)):
         factors = get_factors(match_dists[i]) 
-        #print("Factors of ", match_dists[i], "are: ", factors)
 
         for j in range(len(factors)): 
             if factors[j] != 1: 
@@ -381,60 +351,36 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency, wor
         return
 
     alphabet_size = len(alphabet)
-    best_key_guesses = []
-    #print("CANDIDATE KEY LENGTHS: ", likely_lens) 
-    for likely_len in likely_lens:
-        #print("LIKELY KEY LENGTH: ", likely_len) 
+    best_key_guesses = [] 
+    for likely_len in likely_lens: 
         cuts = cipher_cuts(ciphertext, likely_len)
         candidate_key_chars = []
+        
         for i in range(len(cuts)):
             cut = cuts[i]
             cut_match_score_dict = {}
-            #print("ORIGINAL CUT: ", cut, "\n")
+            
             for char in alphabet:
                 decrypted_cut = ""
+                
                 for j in range(len(cut)):
                     decrypted_cut += chr((ord(cut[j]) - ord(char)) % 255)
-                #print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut)
+                
                 match_score, matches = frequency_match_score(decrypted_cut, alphabet_by_frequency)
                 cut_match_score_dict.update({char: match_score})
-                #print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut, "|MATCH SCORE: ", match_score, "|MATCHES: ", matches)
-
-            #print("CUT MATCH SCORES: ", cut_match_score_dict)
-            #now we have a dictionary of match scores for each char in the alphabet 
-            #we want to get the chars with the max scores from the dictionary
-            #if multiple chars have the same max match scores, then we want all of them 
-            #getting max scores 
-            sorted_match_scores = sorted(cut_match_score_dict, key = cut_match_score_dict.get,\
-                    reverse = True)
-            #print("SORTED MATCH SCORES: ", sorted_match_scores)
+ 
+            sorted_match_scores = sorted(cut_match_score_dict, key = cut_match_score_dict.get,reverse = True)
             candidates = sorted_match_scores[:5]
-            #instead of dictionary, create list of lists that is length likely_len
             candidate_key_chars.append(candidates)
 
-        #getting all possible keys given best guesses about which chars comprise the key of a 
-        #given length
-        #print("CANDIDATE KEY CHARS: ", candidate_key_chars)
         possible_keys = get_key_combos(candidate_key_chars, likely_len)
 
-        #brute forcing through possible keys to see if any of them are plausible
-        #only one should actually produce coherent text in english
-        #print("LIKELY KEY LENGTH: ", likely_len)
-        #print("NUM POSSIBLE KEYS: ", len(possible_keys))
-        #print("POSSIBLE KEYS: ", possible_keys)
         for key in possible_keys:
-            #print("CIPHERTEXT: ", ciphertext) 
-            #keystream = create_key_stream(key, ciphertext)
             trial_recovery_text, trial_recovery_file = decrypt(key, ciphertext_file_name) 
-            #print("RECOVERED: ", trial_recovery_text)
             if is_english(trial_recovery_text, alphabet, "engmix.txt", word_percentage, letter_percentage):
-                #print("FOUND ENGLISH RECOVERED TEXT!")
-                #best_key_guess = key 
-                #print("KEY: ", key)
                 best_key_guesses.append(key)
             else:
                 pass
-                #print("RECOVERED TEXT NOT ENGLISH!")
 
         if len(best_key_guesses) != 0:
             break
@@ -443,7 +389,6 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency, wor
         print("Reasonable key guess not found. \
                Consider using manual hack mode to break the cipher.")
 
-    #print(best_key_guesses)
     return best_key_guesses 
 
 def main():
@@ -451,54 +396,61 @@ def main():
     # we must know which mode the user wants to operate in 
     Mode = parser.add_mutually_exclusive_group(required = True )
     #We want three main modes: encrypt, decrypt, and cryptanalyze
-    Mode.add_argument("-e", "--encrypt", nargs = 2, type = str, help = "This\
-            is encrypt mode.The first argument is the name of the plaintext file you'd like to \
-            encrypt. The second argument is the key you'd like to encrypt your plaintext file\
-            with.") 
-    Mode.add_argument("-d", "--decrypt", nargs = 2, type = str,\
-            help = "This is decrypt mode. The first argument is the name of the ciphertext\
-            file you'd like to decrypt. The second argument is the key you'd like ot tuse to \
-            decrypt the ciphertext file with.")
-    Mode.add_argument("-c", "--cryptanal", nargs = 4, type = str, help = \
-            "This is cryptanalysis mode. The first argumet is the name of the ciphertext file\
-            you'd like to analyze. The second argument is the language you suspect the decrypted\
-            message will be in. The third argument is a word match percentage threshold. The\
-            fourth arguent is a letter match percentage threshold.") 
+    Mode.add_argument("-e", "--encrypt", action = "store_true") 
+    Mode.add_argument("-d", "--decrypt", action = "store_true")
+    Mode.add_argument("-c", "--cryptanal", action = "store_true") 
     
     # no matter which mode the user is in, a file name must be passed. 
     # if the user is in encrypt mode the plaintext must be passed 
     # if the user is in decrypt mode the ciphertext must be passed 
     # if the user is in cryptanal mode the ciphertext must be passed 
     #File_pass = parser.add_mutually_exclusive_group(required = True)
-  
+        
+    parser.add_argument("-f", "--file", required = True, help = "The name of either the plaintext file you\
+            you want to encrypt, or the ciphertext file you want to \
+            decrypt or analyze", type = str)
+    parser.add_argument("-k","--key", required = False, help = "The key with which your plaintext file will be\
+            encrypted", type = str) 
+    parser.add_argument("-l", "--language", required = False, help = "This is the language you believe the\
+            message to be in", default = 'English', choices = ['English'], type = str) 
+    parser.add_argument("-wp", "--word_percentage", required = False, help = "When cryptanalyzing,\
+            this is the percentage of matched words of the indicated language in the ciphertext\
+            decrypted by a candidate keyword that must be reached in order for the candidate recovered\
+            text to be considered of that language.",\
+            default = 60, type = float)
+    parser.add_argument("-lp", "--letter_percentage", required = False, help = "When cryptoanalyzing, this\
+            is the percentage of matched letters of the indicated language in the ciphertext decrypted by\
+            a candidate keyword that must be reached in order for the candidate recovered text to be\
+            considered of that language.", default = 80, type = float) 
+
     #if we enter cryptanalysis mode, then we want to know if the analysis should be 
     #done automatically, or if it should be done manually.
     #if the analysis is to be done manually. Then, not sure ... will have to figure out
     args = parser.parse_args() 
 
     if args.encrypt:
-        plaintext_file_name = args.encrypt[0]
-        key = args.encrypt[1] 
+        plaintext_file_name = args.file
+        key = args.key 
         ciphertext, ciphertext_file = encrypt(key, plaintext_file_name) 
         print(plaintext_file_name, " has been encrypted:")
         cipher_text = open(ciphertext_file.name, "rt", encoding = "utf-8").read()
         print(cipher_text)  
     elif args.decrypt: 
-        ciphertext_file_name = args.decrypt[0]
-        key = args.decrypte[1]
+        ciphertext_file_name = args.file
+        key = args.key
         recovered_text, recovered_text_file = decrypt(key, ciphertext_file_name) 
         print(ciphertext_file_name, " has been decrypted:")
         recoveredtext = open(recovered_text_file.name, "rt", encoding = "utf-8").read()
         print(recoveredtext)
     elif args.cryptanal: 
-        ciphertext_file_name = args.cryptanal[0]
-        if args.cryptanal[1] == "English":
+        ciphertext_file_name = args.file
+        if args.language == "English":
             dictionary_name = "mixeng.txt"
             alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             alphabet = alphabet + alphabet.lower()
             alphabet_by_freq = "ETAOINSHRDLCUMWFGYPBVKJXQZ"
-        word_percentage = float(args.cryptanal[2])
-        letter_percentage = float(args.cryptanal[3])
+        word_percentage = args.word_percentage
+        letter_percentage = args.letter_percentage
         best_key_guesses = kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_freq,\
                 word_percentage, letter_percentage) 
 
@@ -533,4 +485,4 @@ Let's do a review of what we have at the moment First, we have a bunch of method
 -- use argparser to create cmd vigenere encryption tool 
 -- Perhaps move this to a object-oriented architecture 
 
-'''
+
