@@ -4,7 +4,12 @@
 # Once we have this ranked list of key length candidates, we want to know how often the
 # correct key length can be found in the top 5 candidate factors, top 10, and so on
 # In the end, this script shoudl return the bucket in which the correct keylength is most likely 
-# to appear 
+# to appear
+
+
+
+#More broadly, this file will later turn into a collection of methods for statistical analysis of 
+#various aspects of the vigenere cipher cryptanalysis. 
 
 import Vigenere as vg  
 from nltk import corpus
