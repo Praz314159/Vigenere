@@ -382,20 +382,20 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency, wor
 
     alphabet_size = len(alphabet)
     best_key_guesses = []
-    #print("CANDIDATE KEY LENGTHS: ", likely_lens) 
+    print("CANDIDATE KEY LENGTHS: ", likely_lens) 
     for likely_len in likely_lens:
-        #print("LIKELY KEY LENGTH: ", likely_len) 
+        print("LIKELY KEY LENGTH: ", likely_len) 
         cuts = cipher_cuts(ciphertext, likely_len)
         candidate_key_chars = []
         for i in range(len(cuts)):
             cut = cuts[i]
             cut_match_score_dict = {}
-            #print("ORIGINAL CUT: ", cut, "\n")
+            print("ORIGINAL CUT: ", cut, "\n")
             for char in alphabet:
                 decrypted_cut = ""
                 for j in range(len(cut)):
                     decrypted_cut += chr((ord(cut[j]) - ord(char)) % 255)
-                #print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut)
+                print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut)
                 match_score, matches = frequency_match_score(decrypted_cut, alphabet_by_frequency)
                 cut_match_score_dict.update({char: match_score})
                 #print("CHAR: ", char, "|DECRYPTED CUT: ", decrypted_cut, "|MATCH SCORE: ", match_score, "|MATCHES: ", matches)
@@ -407,14 +407,14 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency, wor
             #getting max scores 
             sorted_match_scores = sorted(cut_match_score_dict, key = cut_match_score_dict.get,\
                     reverse = True)
-            #print("SORTED MATCH SCORES: ", sorted_match_scores)
+            print("SORTED MATCH SCORES: ", sorted_match_scores)
             candidates = sorted_match_scores[:5]
             #instead of dictionary, create list of lists that is length likely_len
             candidate_key_chars.append(candidates)
 
         #getting all possible keys given best guesses about which chars comprise the key of a 
         #given length
-        #print("CANDIDATE KEY CHARS: ", candidate_key_chars)
+        print("CANDIDATE KEY CHARS: ", candidate_key_chars)
         possible_keys = get_key_combos(candidate_key_chars, likely_len)
 
         #brute forcing through possible keys to see if any of them are plausible
@@ -430,7 +430,7 @@ def kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_frequency, wor
             if is_english(trial_recovery_text, alphabet, "engmix.txt", word_percentage, letter_percentage):
                 #print("FOUND ENGLISH RECOVERED TEXT!")
                 #best_key_guess = key 
-                #print("KEY: ", key)
+                print("KEY: ", key)
                 best_key_guesses.append(key)
             else:
                 pass
