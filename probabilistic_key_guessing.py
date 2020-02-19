@@ -6,8 +6,6 @@
 # In the end, this script shoudl return the bucket in which the correct keylength is most likely 
 # to appear
 
-
-
 #More broadly, this file will later turn into a collection of methods for statistical analysis of 
 #various aspects of the vigenere cipher cryptanalysis. 
 

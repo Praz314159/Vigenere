@@ -13,6 +13,7 @@ import matplotlib.pylab as plt
 import itertools, re
 import io
 import argparse
+import timeit
 ########################## ENCRYPTION/DECRYPTION METHODS ################################ 
 
 ############## CLASSIC VIGENERE ##################
@@ -499,10 +500,13 @@ def main():
             alphabet_by_freq = "ETAOINSHRDLCUMWFGYPBVKJXQZ"
         word_percentage = float(args.cryptanal[2])
         letter_percentage = float(args.cryptanal[3])
+        start = timeit.timeit()
         best_key_guesses = kasiski_exam_hack(ciphertext_file_name, alphabet, alphabet_by_freq,\
                 word_percentage, letter_percentage) 
-
-        print("Key Guesses: ", best_key_guesses) 
+        end = timeit.timeit() 
+        time_elapsed = end - start
+        print("Key Guesses: ", best_key_guesses)
+        print("Speed: ", time_elapsed)
 
 
 if __name__ == "__main__":
@@ -532,5 +536,9 @@ Let's do a review of what we have at the moment First, we have a bunch of method
 -- use argparser to run cryptanalysis with preset alphabets (cyrillic, english, french, etc.) 
 -- use argparser to create cmd vigenere encryption tool 
 -- Perhaps move this to a object-oriented architecture 
+-- Can we write this in C? 
+-- Now we want statistical tools!!!! 
+    -- how does speed of cryptanalysis change with respect to keyword length? 
+    -- how to optimize two parameters (most_frequent_factors and most_english_chars) 
 
 '''
