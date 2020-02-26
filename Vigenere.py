@@ -129,26 +129,7 @@ def frequency_match_score(text, alphabet_by_frequency):
     text_freq_order = frequency_order(text)
     lower_by_freq = alphabet_by_frequency.lower()
     match_score = 0
-    '''
-    for i in range(5): 
-        for j in range(5):
-            if text_freq_order[i] == alphabet_by_frequency[j]:
-                print("TEXT: ", text_freq_order[i], "|ALPH: ", alphabet_by_frequency[j])
-                match_score += 1
-            elif text_freq_order[i] == lower_by_freq[j]:
-                print("TEXT: ", text_freq_order[i], "|ALPH: ", lower_by_freq[j])
-                match_score += 1
-            
-    for i in range(5):
-        for j in range(5):
-            if text_freq_order[-i] == alphabet_by_frequency[-j]:
-                print("TEXT: ", text_freq_order[-i], "|ALPH: ", alphabet_by_frequency[-j])
-                match_score += 1
-            elif text_freq_order[-i] == lower_by_freq[-j]:
-                print("TEXT: ", text_freq_order[-i], "|ALPH: ", lower_by_freq[-j])
-                match_score += 1
 
-    '''
     #print("MOST COMMON: ", text_freq_order[:5])
     #print("LEAST COMMON: ", text_freq_order[-5:])
     matches = []
